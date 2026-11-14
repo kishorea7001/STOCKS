@@ -603,11 +603,11 @@ export default function TalkStockExactUI() {
         {/* ───────────────────────────────────────────────────────────── */}
         <div className="flex flex-col md:flex-row bg-[#F8FAFD] min-h-[760px]">
           {/* ───────────────────────────────────────────────────────────── */}
-          {/* LEFT SIDEBAR (Soft Ice-Blue Glass matching the image)        */}
+          {/* LEFT SIDEBAR (Fixed vertical sidebar ~225px wide)             */}
           {/* ───────────────────────────────────────────────────────────── */}
-          <aside className="w-full md:w-60 bg-[#EEF3FA] border-r border-[#DDE5F2] flex flex-col justify-between p-5 shrink-0">
+          <aside className="w-full md:w-[225px] bg-[#EEF3FA] border-r border-[#DDE5F2] flex flex-col justify-between p-5 shrink-0">
             <div className="space-y-6">
-              {/* Logo Header: 3D Blue Cube + TalkStock */}
+              {/* Logo Header: Blue 3D Cube/Package Icon + TalkStock */}
               <div
                 className="flex items-center space-x-3 cursor-pointer pt-1"
                 onClick={() => {
@@ -636,6 +636,7 @@ export default function TalkStockExactUI() {
 
               {/* Sidebar Nav Links */}
               <nav className="space-y-1 pt-1">
+                {/* 1. Home - active with bright blue rounded rectangular background */}
                 <button
                   onClick={() => {
                     setActiveTab('home');
@@ -651,6 +652,7 @@ export default function TalkStockExactUI() {
                   <span>Home</span>
                 </button>
 
+                {/* 2. Products */}
                 <button
                   onClick={() => openView('products')}
                   className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all cursor-pointer ${
@@ -663,6 +665,7 @@ export default function TalkStockExactUI() {
                   <span>Products</span>
                 </button>
 
+                {/* 3. Leftover Stock */}
                 <button
                   onClick={() => openView('leftover')}
                   className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all cursor-pointer ${
@@ -675,6 +678,7 @@ export default function TalkStockExactUI() {
                   <span>Leftover Stock</span>
                 </button>
 
+                {/* 4. Alerts with red circular badge showing 2 */}
                 <button
                   onClick={() => openView('alerts')}
                   className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl font-bold text-sm transition-all cursor-pointer ${
@@ -694,6 +698,7 @@ export default function TalkStockExactUI() {
                   )}
                 </button>
 
+                {/* 5. Settings */}
                 <button
                   onClick={() => openView('settings')}
                   className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all cursor-pointer ${
@@ -706,6 +711,7 @@ export default function TalkStockExactUI() {
                   <span>Settings</span>
                 </button>
 
+                {/* 6. About */}
                 <button
                   onClick={() => openView('about')}
                   className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl font-bold text-sm transition-all cursor-pointer ${
@@ -722,7 +728,7 @@ export default function TalkStockExactUI() {
 
             {/* Lower Sidebar: Voice Ready Card & Light Mode Toggle */}
             <div className="space-y-3 pt-6">
-              {/* Voice Ready Card - Organized sideways */}
+              {/* Voice Ready Card */}
               <div
                 onClick={isRecording ? stopRecording : startRecording}
                 className="bg-white/90 hover:bg-white rounded-2xl p-3.5 border border-blue-100 shadow-2xs flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
@@ -739,7 +745,7 @@ export default function TalkStockExactUI() {
                   <div className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
                     {isRecording ? `${formatSeconds(recordingTime)} elapsed` : 'Say something...'}
                   </div>
-                  {/* Animated sound waves sideways */}
+                  {/* Small animated-looking blue audio waveform */}
                   <div className="flex items-center gap-0.5 h-3 mt-1.5">
                     {[6, 12, 18, 10, 16, 8, 14, 6].map((h, i) => (
                       <div
@@ -754,7 +760,7 @@ export default function TalkStockExactUI() {
                 </div>
               </div>
 
-              {/* Light Mode Dropdown Button */}
+              {/* Theme selector showing Light Mode */}
               <button
                 onClick={() => showFeedback('info', 'Active theme: Light Mode')}
                 className="w-full bg-white hover:bg-slate-50 text-slate-700 py-2.5 px-3.5 rounded-2xl border border-slate-200/80 text-xs font-bold flex items-center justify-between shadow-xs transition-colors cursor-pointer"
@@ -783,108 +789,13 @@ export default function TalkStockExactUI() {
                 </p>
               </div>
 
-              {/* Top Right Green Online Status Badge */}
+              {/* Upper-right rounded status pill: Green indicator + Online */}
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Online
                 </span>
               </div>
-            </div>
-
-            {/* Horizontal Navigation Tabs (Icons Organized Sideways in a Row) */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              <button
-                onClick={() => {
-                  setActiveTab('home');
-                  setActiveModal('none');
-                }}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeTab === 'home' && activeModal === 'none'
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-                }`}
-              >
-                <Home className="w-3.5 h-3.5" />
-                <span>Home</span>
-              </button>
-
-              <button
-                onClick={() => openView('products')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeModal === 'products'
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-                }`}
-              >
-                <Box className="w-3.5 h-3.5" />
-                <span>Products ({productTypesCount})</span>
-              </button>
-
-              <button
-                onClick={() => openView('leftover')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeModal === 'leftover'
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-                }`}
-              >
-                <Gift className="w-3.5 h-3.5" />
-                <span>Leftover Stock</span>
-              </button>
-
-              <button
-                onClick={() => openView('alerts')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeModal === 'alerts'
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-                }`}
-              >
-                <Bell className="w-3.5 h-3.5" />
-                <span>Alerts</span>
-                {lowStockProducts.length > 0 && (
-                  <span className="w-4.5 h-4.5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center">
-                    {lowStockProducts.length}
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => openView('history')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeModal === 'history'
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-                }`}
-              >
-                <BarChart2 className="w-3.5 h-3.5" />
-                <span>Audit Logs</span>
-              </button>
-
-              <button
-                onClick={() => openView('settings')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeModal === 'settings'
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-                }`}
-              >
-                <Settings className="w-3.5 h-3.5" />
-                <span>Settings</span>
-              </button>
-
-              <button
-                onClick={() => openView('about')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeModal === 'about'
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-                }`}
-              >
-                <Info className="w-3.5 h-3.5" />
-                <span>About</span>
-              </button>
             </div>
 
             {/* Global Feedback Banner */}
@@ -910,15 +821,15 @@ export default function TalkStockExactUI() {
             )}
 
             {/* ───────────────────────────────────────────────────────────── */}
-            {/* ROW 1: THREE METRICS CARDS (ICONS ORGANIZED SIDEWAYS)         */}
+            {/* STATISTICS CARDS (Three large rounded cards in one row)       */}
             {/* ───────────────────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Card 1: Total Products - Icon on Left, Text on Right */}
+              {/* Card 1 — Total Products (Light blue gradient) */}
               <div
                 onClick={() => openView('products')}
-                className="bg-gradient-to-br from-[#EEF5FF] to-[#E2EDFE] rounded-2xl p-4.5 border border-blue-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
+                className="bg-gradient-to-br from-[#EEF5FF] via-[#F4F8FE] to-[#FAFDFE] rounded-3xl p-5 border border-blue-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
               >
-                <div className="flex items-center gap-3.5">
+                <div className="flex items-center gap-4">
                   <div className="w-13 h-13 rounded-2xl bg-white/90 border border-blue-200/80 shadow-2xs flex items-center justify-center shrink-0 text-blue-600">
                     <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill="#3B82F6" fillOpacity="0.25" stroke="#2563EB" strokeWidth="3" strokeLinejoin="round"/>
@@ -927,22 +838,18 @@ export default function TalkStockExactUI() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-500">Total Products</div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-none mt-0.5">{productTypesCount}</div>
+                    <div className="text-3xl font-black text-slate-900 leading-tight">{productTypesCount}</div>
+                    <div className="text-xs font-bold text-slate-500 mt-0.5">Total Products</div>
                   </div>
-                </div>
-                <div className="text-blue-600 text-xs font-bold flex items-center gap-0.5 opacity-80 hover:opacity-100">
-                  <span>Manage</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
 
-              {/* Card 2: Low Stock Alerts - Icon on Left, Text on Right */}
+              {/* Card 2 — Low Stock Alerts (Light green gradient) */}
               <div
                 onClick={() => openView('alerts')}
-                className="bg-gradient-to-br from-[#EEFAF3] to-[#E0F7EB] rounded-2xl p-4.5 border border-emerald-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
+                className="bg-gradient-to-br from-[#EEFAF3] via-[#F3FCF7] to-[#FAFEFC] rounded-3xl p-5 border border-emerald-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
               >
-                <div className="flex items-center gap-3.5">
+                <div className="flex items-center gap-4">
                   <div className="w-13 h-13 rounded-2xl bg-white/90 border border-emerald-200/80 shadow-2xs flex items-center justify-center shrink-0 text-emerald-600">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
@@ -951,22 +858,18 @@ export default function TalkStockExactUI() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-500">Low Stock Alerts</div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-none mt-0.5">{lowStockProducts.length}</div>
+                    <div className="text-3xl font-black text-slate-900 leading-tight">{lowStockProducts.length}</div>
+                    <div className="text-xs font-bold text-slate-500 mt-0.5">Low Stock Alerts</div>
                   </div>
-                </div>
-                <div className="text-emerald-700 text-xs font-bold flex items-center gap-0.5 opacity-80 hover:opacity-100">
-                  <span>View All</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
 
-              {/* Card 3: Leftover Stock - Icon on Left, Text on Right */}
+              {/* Card 3 — Inventory Details (Light purple gradient) */}
               <div
                 onClick={() => openView('leftover')}
-                className="bg-gradient-to-br from-[#F5EFFE] to-[#EBE2FC] rounded-2xl p-4.5 border border-purple-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
+                className="bg-gradient-to-br from-[#F5EFFE] via-[#F9F5FE] to-[#FDFBFE] rounded-3xl p-5 border border-purple-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
               >
-                <div className="flex items-center gap-3.5">
+                <div className="flex items-center gap-4">
                   <div className="w-13 h-13 rounded-2xl bg-white/90 border border-purple-200/80 shadow-2xs flex items-center justify-center shrink-0 text-purple-600">
                     <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill="#A855F7" fillOpacity="0.3" stroke="#9333EA" strokeWidth="3" strokeLinejoin="round"/>
@@ -975,23 +878,22 @@ export default function TalkStockExactUI() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-500">Leftover Stock</div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-none mt-0.5">{leftoverStockTotal}</div>
+                    <div className="text-3xl font-black text-slate-900 leading-tight">{leftoverStockTotal}</div>
+                    <div className="text-xs font-bold text-purple-700 mt-0.5 flex items-center gap-1">
+                      <span>View Details</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
                   </div>
-                </div>
-                <div className="text-purple-700 text-xs font-bold flex items-center gap-0.5 opacity-80 hover:opacity-100">
-                  <span>View Details</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
             </div>
 
             {/* ───────────────────────────────────────────────────────────── */}
-            {/* ROW 2: QUICK ACTIONS (ICONS ORGANIZED SIDEWAYS)               */}
+            {/* QUICK ACTIONS (Large white rounded card)                      */}
             {/* ───────────────────────────────────────────────────────────── */}
-            <div className="space-y-3 pt-1">
+            <section className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-sm font-black text-slate-900">
+                <div className="flex items-center gap-2 font-black text-slate-900 text-sm">
                   <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
                   <span>Quick Actions</span>
                 </div>
@@ -1004,103 +906,79 @@ export default function TalkStockExactUI() {
                 </button>
               </div>
 
-              {/* 4 Colored Action Buttons - Icons on Left, Text on Right */}
+              {/* 4 Equal Action Buttons */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* 1. Reset Demo */}
                 <button
                   onClick={handleResetDemoData}
                   disabled={resettingDemo}
-                  className="bg-[#EAF2FD]/90 hover:bg-[#EAF2FD] text-blue-900 border border-blue-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
+                  className="bg-[#EAF2FD] hover:bg-[#DDEBFC] text-[#2563EB] border border-blue-200/70 rounded-2xl p-4 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-blue-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#2563EB]">
-                    <RotateCcw className={`w-4.5 h-4.5 ${resettingDemo ? 'animate-spin' : ''}`} />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <span className="text-xs font-extrabold text-slate-900 block truncate">Reset Demo</span>
-                    <span className="text-[10px] text-blue-600 font-semibold block">Restore stock</span>
-                  </div>
+                  <RotateCcw className={`w-5 h-5 text-[#2563EB] shrink-0 ${resettingDemo ? 'animate-spin' : ''}`} />
+                  <span className="text-xs font-extrabold text-[#1E40AF]">Reset Demo</span>
                 </button>
 
                 {/* 2. Refresh */}
                 <button
                   onClick={fetchInventory}
                   disabled={loadingProducts}
-                  className="bg-[#EAF8F1]/90 hover:bg-[#EAF8F1] text-emerald-900 border border-emerald-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
+                  className="bg-[#EAF8F1] hover:bg-[#DEF4E7] text-[#059669] border border-emerald-200/70 rounded-2xl p-4 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-emerald-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#059669]">
-                    <RefreshCw className={`w-4.5 h-4.5 ${loadingProducts ? 'animate-spin' : ''}`} />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <span className="text-xs font-extrabold text-slate-900 block truncate">Refresh</span>
-                    <span className="text-[10px] text-emerald-600 font-semibold block">Sync SQLite</span>
-                  </div>
+                  <RefreshCw className={`w-5 h-5 text-[#059669] shrink-0 ${loadingProducts ? 'animate-spin' : ''}`} />
+                  <span className="text-xs font-extrabold text-[#065F46]">Refresh</span>
                 </button>
 
                 {/* 3. Settings */}
                 <button
                   onClick={() => openView('settings')}
-                  className="bg-[#F3EDFD]/90 hover:bg-[#F3EDFD] text-purple-900 border border-purple-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
+                  className="bg-[#F3EDFD] hover:bg-[#EAE0FB] text-[#7C3AED] border border-purple-200/70 rounded-2xl p-4 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-purple-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#7C3AED]">
-                    <Settings className="w-4.5 h-4.5" />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <span className="text-xs font-extrabold text-slate-900 block truncate">Settings</span>
-                    <span className="text-[10px] text-purple-600 font-semibold block">Config &amp; AI</span>
-                  </div>
+                  <Settings className="w-5 h-5 text-[#7C3AED] shrink-0" />
+                  <span className="text-xs font-extrabold text-[#5B21B6]">Settings</span>
                 </button>
 
                 {/* 4. Voice Command */}
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
                   disabled={processingAI || confirmingUpdates}
-                  className="bg-[#ECF4FE]/90 hover:bg-[#ECF4FE] text-sky-900 border border-sky-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
+                  className="bg-[#ECF4FE] hover:bg-[#DCEBFE] text-[#2563EB] border border-sky-200/70 rounded-2xl p-4 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-sky-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#2563EB]">
-                    <Mic className={`w-4.5 h-4.5 ${isRecording ? 'animate-pulse text-rose-600' : ''}`} />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <span className="text-xs font-extrabold text-slate-900 block truncate">
-                      {isRecording ? 'Stop Mic' : 'Voice Command'}
-                    </span>
-                    <span className="text-[10px] text-blue-600 font-semibold block">Speak now</span>
-                  </div>
+                  <Mic className={`w-5 h-5 text-[#2563EB] shrink-0 ${isRecording ? 'animate-pulse text-rose-600' : ''}`} />
+                  <span className="text-xs font-extrabold text-[#1E40AF]">
+                    {isRecording ? 'Stop Mic' : 'Voice Command'}
+                  </span>
                 </button>
               </div>
-            </div>
+            </section>
 
             {/* ───────────────────────────────────────────────────────────── */}
-            {/* ROW 3: HERO VOICE BAR (Tap to Speak + Speech Bubble)          */}
+            {/* VOICE COMMAND SECTION (Prominent Blue-Gradient Card)          */}
             {/* ───────────────────────────────────────────────────────────── */}
-            <section className="bg-gradient-to-r from-blue-100/50 via-sky-50/30 to-indigo-50/40 rounded-3xl p-5 border border-blue-200/70 shadow-xs relative overflow-hidden">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                {/* Concentric Circle Mic Button */}
+            <section className="bg-gradient-to-r from-[#DBEAFA] via-[#E8F1FE] to-[#F1F6FE] rounded-3xl p-5 sm:p-6 border border-blue-200/80 shadow-xs relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                {/* Left side: Large circular mic button with subtle concentric glowing rings */}
                 <div className="relative flex items-center justify-center shrink-0">
-                  <div
-                    className={`w-18 h-18 rounded-full flex items-center justify-center p-2 transition-all ${
-                      isRecording ? 'bg-rose-100' : 'bg-blue-100/80'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={isRecording ? stopRecording : startRecording}
-                      disabled={processingAI || confirmingUpdates}
-                      className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-95 cursor-pointer ${
-                        isRecording
-                          ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/30'
-                          : 'bg-[#2563EB] hover:bg-blue-700 shadow-blue-500/30'
-                      }`}
-                    >
-                      {isRecording ? (
-                        <Square className="w-5 h-5 fill-white" />
-                      ) : (
-                        <Mic className="w-6 h-6" />
-                      )}
-                    </button>
+                  <div className="w-24 h-24 rounded-full bg-blue-100/50 border border-blue-200/60 flex items-center justify-center">
+                    <div className={`w-19 h-19 rounded-full flex items-center justify-center transition-all ${
+                      isRecording ? 'bg-rose-200/60 ring-4 ring-rose-300/40' : 'bg-blue-200/50 ring-4 ring-blue-300/30'
+                    }`}>
+                      <button
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        disabled={processingAI || confirmingUpdates}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-95 cursor-pointer ${
+                          isRecording
+                            ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/35'
+                            : 'bg-[#2563EB] hover:bg-blue-700 shadow-blue-500/35'
+                        }`}
+                      >
+                        {isRecording ? <Square className="w-5 h-5 fill-white" /> : <Mic className="w-6 h-6" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Text prompts & speech bubble */}
+                {/* Right side: Heading, Subtitle, and white translucent input-style area */}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
                     {isRecording ? (
@@ -1118,35 +996,34 @@ export default function TalkStockExactUI() {
                     )}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    Say natural voice commands or click an example prompt below:
+                    Say something like:
                   </p>
 
-                  {/* Interactive suggestion chips organized sideways */}
-                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTextInput('Update rice count to 50')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-blue-200/80 shadow-2xs text-xs font-semibold cursor-pointer transition-all hover:border-blue-400 active:scale-95"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      <span>&ldquo;Update rice count to 50&rdquo;</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTextInput('Sold 5 packets of milk')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-emerald-600 border border-blue-200/80 shadow-2xs text-xs font-semibold cursor-pointer transition-all hover:border-emerald-400 active:scale-95"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <span>&ldquo;Sold 5 packets of milk&rdquo;</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTextInput('2 kg sugar left')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-purple-600 border border-blue-200/80 shadow-2xs text-xs font-semibold cursor-pointer transition-all hover:border-purple-400 active:scale-95"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                      <span>&ldquo;2 kg sugar left&rdquo;</span>
-                    </button>
+                  {/* White/light translucent input-style area containing example voice commands */}
+                  <div className="mt-2.5 p-3.5 bg-white/95 rounded-2xl border border-blue-200/80 shadow-2xs flex items-start gap-2.5">
+                    <MessageSquare className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                    <div className="text-xs font-semibold text-slate-700 leading-relaxed">
+                      <span
+                        onClick={() => setTextInput('Update rice count to 50')}
+                        className="hover:text-blue-600 cursor-pointer font-bold"
+                      >
+                        &ldquo;Update rice count to 50&rdquo;
+                      </span>{' '}
+                      <span className="text-slate-300">|</span>{' '}
+                      <span
+                        onClick={() => setTextInput('Sold 5 packets of milk')}
+                        className="hover:text-blue-600 cursor-pointer font-bold"
+                      >
+                        &ldquo;Sold 5 packets of milk&rdquo;
+                      </span>
+                      <br />
+                      <span
+                        onClick={() => setTextInput('2 kg sugar left')}
+                        className="hover:text-blue-600 cursor-pointer text-slate-500 font-medium"
+                      >
+                        &ldquo;2 kg sugar left&rdquo;
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1157,7 +1034,7 @@ export default function TalkStockExactUI() {
                   type="text"
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  placeholder="Or type inventory command here (e.g. 'Sold 5 packets milk and 2 kg sugar')..."
+                  placeholder="Or type inventory command here..."
                   disabled={processingAI || isRecording || confirmingUpdates}
                   className="flex-1 bg-white border border-blue-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
