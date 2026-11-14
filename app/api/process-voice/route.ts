@@ -1,64 +1,105 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parseVoicePrompt } from '@/lib/ai';
+import { db } from '@/lib/db';
+import { processVoiceOrText } from '@/lib/ai';
+
+// Disable Edge runtime; ensure strict Node.js server-side execution for Buffer & DB access
+export const runtime = 'nodejs';
 
 /**
- * POST /api/process-voice
- * Handles audio/text payloads and performs AI parsing for inventory actions.
+ * POST /app/api/process-voice
+ * 
+ * Server-side route that accepts audio (FormData) or text fallback,
+ * queries the live product catalog from SQLite via Prisma, and invokes
+ * Gemini with multimodal audio understanding or Hinglish text parsing.
+ * 
+ * CRITICAL ARCHITECTURAL RULE:
+ * This route is strictly read-only / preview. It never modifies the database.
  */
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || '';
 
-    if (contentType.includes('application/json')) {
-      const body = await request.json();
-      const { text } = body;
+    let audioBuffer: Buffer | undefined;
+    let mimeType: string | undefined;
+    let rawText: string | undefined;
 
-      if (!text) {
-        return NextResponse.json(
-          { error: 'Missing "text" field in request body.' },
-          { status: 400 }
-        );
-      }
-
-      const result = await parseVoicePrompt({ text });
-      return NextResponse.json(result);
-    }
-
+    // 1. Parse incoming request (multipart/form-data or application/json)
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
-      const audioFile = formData.get('audio') as File | null;
-      const text = formData.get('text') as string | null;
+      const file = formData.get('audio') as File | null;
+      const textFromForm = formData.get('text') as string | null;
 
-      if (!audioFile && !text) {
-        return NextResponse.json(
-          { error: 'Provide either an "audio" file or "text" prompt.' },
-          { status: 400 }
-        );
+      if (file && file.size > 0) {
+        const arrayBuf = await file.arrayBuffer();
+        audioBuffer = Buffer.from(arrayBuf);
+        mimeType = file.type || 'audio/webm';
       }
 
-      let audioBuffer: Buffer | undefined;
-      let mimeType: string | undefined;
-
-      if (audioFile) {
-        const bytes = await audioFile.arrayBuffer();
-        audioBuffer = Buffer.from(bytes);
-        mimeType = audioFile.type;
+      if (textFromForm && textFromForm.trim().length > 0) {
+        rawText = textFromForm.trim();
       }
-
-      const result = await parseVoicePrompt({
-        audioBuffer,
-        text: text ?? undefined,
-        mimeType,
-      });
-
-      return NextResponse.json(result);
+    } else if (contentType.includes('application/json')) {
+      const jsonBody = await request.json();
+      if (jsonBody.text && typeof jsonBody.text === 'string') {
+        rawText = jsonBody.text.trim();
+      }
+      if (jsonBody.audioBase64 && typeof jsonBody.audioBase64 === 'string') {
+        audioBuffer = Buffer.from(jsonBody.audioBase64, 'base64');
+        mimeType = jsonBody.mimeType || 'audio/webm';
+      }
+    } else {
+      return NextResponse.json(
+        {
+          error:
+            'Unsupported content type. Send multipart/form-data (with audio file or text) or application/json.',
+        },
+        { status: 415 }
+      );
     }
 
-    return NextResponse.json(
-      { error: 'Unsupported Content-Type. Use application/json or multipart/form-data.' },
-      { status: 415 }
-    );
+    if (!audioBuffer && !rawText) {
+      return NextResponse.json(
+        { error: 'No audio file or text payload provided.' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Fetch the live catalog of products from the database
+    // This provides the AI with the exact IDs, names, units, and stock quantities
+    const catalog = await db.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        currentStock: true,
+        unit: true,
+        pricePerUnit: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    if (catalog.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            'Catalog is empty. Please run database seeding (`npm run db:seed`) before processing speech.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // 3. Process with AI (Gemini multimodal audio or bilingual Hinglish text understanding)
+    // NOTE: This route ONLY previews proposed changes and DOES NOT write to the database.
+    const result = await processVoiceOrText({
+      audioBuffer,
+      mimeType,
+      text: rawText,
+      catalog,
+    });
+
+    return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
+    console.error('Error in /api/process-voice:', error);
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
