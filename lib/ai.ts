@@ -205,7 +205,8 @@ Instructions:
    - "unit": unit mentioned or catalog unit.
    - "confidence": number between 0.0 and 1.0.
 3. If an item was mentioned with a quantity/action but is NOT found in the catalog (e.g., chips, cold drinks, chocolate), do NOT invent a productId. Instead add it to "unrecognizedItems" as a descriptive string.
-4. Output strictly valid JSON matching this schema:
+4. If the audio contains only ambient background noise, static, or silence with no audible inventory instructions, set "transcript" to "(Ambient background noise / no clear speech detected)" and "proposedChanges" to [].
+5. Output strictly valid JSON matching this schema:
 {
   "transcript": "string",
   "proposedChanges": [

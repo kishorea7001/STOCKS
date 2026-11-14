@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  RotateCcw,
   Plus,
   Minus,
   Trash2,
@@ -20,6 +21,7 @@ import {
   RefreshCw,
   ShoppingBag,
   Volume2,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface TransactionLog {
@@ -64,6 +66,7 @@ export default function ShopkeeperInventoryApp() {
   // Inventory state
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [resettingDemo, setResettingDemo] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
@@ -99,7 +102,7 @@ export default function ShopkeeperInventoryApp() {
     }, 6000);
   }, []);
 
-  // 1. Fetch inventory on demand
+  // 1. Fetch inventory
   const fetchInventory = useCallback(async () => {
     try {
       setLoadingProducts(true);
@@ -139,7 +142,34 @@ export default function ShopkeeperInventoryApp() {
     };
   }, []);
 
-  // 2. Audio Recording (MediaRecorder API)
+  // 2. Reset Demo Data Action
+  const handleResetDemoData = async () => {
+    const confirmed = window.confirm(
+      'Reset all store inventory back to initial hackathon demo stock levels (10 items)?'
+    );
+    if (!confirmed) return;
+
+    try {
+      setResettingDemo(true);
+      setReviewData(null);
+      const res = await fetch('/api/inventory/reset', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success && Array.isArray(data.inventory)) {
+        setProducts(data.inventory);
+        showFeedback('success', '✓ Demo inventory reset! 10 items restored to initial stock.');
+      } else {
+        throw new Error(data.error || 'Failed to reset demo data');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error resetting demo data';
+      showFeedback('error', msg);
+    } finally {
+      setResettingDemo(false);
+    }
+  };
+
+  // 3. Audio Recording (MediaRecorder API with empty audio guard)
   const startRecording = async () => {
     try {
       setFeedback(null);
@@ -163,6 +193,13 @@ export default function ShopkeeperInventoryApp() {
       recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         stream.getTracks().forEach((track) => track.stop());
+
+        // Edge case: Empty or accidental micro-tap (< 500 bytes or < 0.5 sec)
+        if (audioBlob.size < 500 || recordingTime < 1) {
+          showFeedback('info', 'Recording was too short or silent. Please tap and speak clearly.');
+          return;
+        }
+
         await processAudio(audioBlob);
       };
 
@@ -194,34 +231,39 @@ export default function ShopkeeperInventoryApp() {
     }
   };
 
-  const handleAIResponse = useCallback((data: ProcessVoiceResponse) => {
-    if (!data.proposedChanges || data.proposedChanges.length === 0) {
-      showFeedback(
-        'info',
-        `Heard: "${data.transcript}", but no catalog inventory changes were matched.`
-      );
-      if (data.unrecognizedItems && data.unrecognizedItems.length > 0) {
-        setReviewData({
-          transcript: data.transcript,
-          changes: [],
-          unrecognizedItems: data.unrecognizedItems,
-        });
+  const handleAIResponse = useCallback(
+    (data: ProcessVoiceResponse) => {
+      // Edge case: Background noise or no items matched
+      if (!data.proposedChanges || data.proposedChanges.length === 0) {
+        const heardMsg = data.transcript ? `"${data.transcript}"` : 'ambient noise';
+        showFeedback(
+          'info',
+          `Heard: ${heardMsg}. No catalog items detected. Try saying: "Sold 2 packets of milk".`
+        );
+        if (data.unrecognizedItems && data.unrecognizedItems.length > 0) {
+          setReviewData({
+            transcript: data.transcript,
+            changes: [],
+            unrecognizedItems: data.unrecognizedItems,
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    setReviewData({
-      transcript: data.transcript,
-      changes: data.proposedChanges,
-      unrecognizedItems: data.unrecognizedItems || [],
-    });
-  }, [showFeedback]);
+      setReviewData({
+        transcript: data.transcript,
+        changes: data.proposedChanges,
+        unrecognizedItems: data.unrecognizedItems || [],
+      });
+    },
+    [showFeedback]
+  );
 
-  // 3. Process Audio with /api/process-voice
+  // 4. Process Audio with /api/process-voice
   const processAudio = async (audioBlob: Blob) => {
     try {
       setProcessingAI(true);
-      showFeedback('info', 'Analyzing speech with AI parser...');
+      showFeedback('info', 'Decoding voice note with AI...');
 
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
@@ -245,7 +287,7 @@ export default function ShopkeeperInventoryApp() {
     }
   };
 
-  // 4. Process Text fallback
+  // 5. Process Text fallback
   const handleTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!textInput.trim() || processingAI) return;
@@ -274,7 +316,7 @@ export default function ShopkeeperInventoryApp() {
     }
   };
 
-  // 5. Review Card item edit / delete handlers
+  // 6. Review Card item edit / delete / cap handlers
   const updateChangeQuantity = (index: number, newQty: number) => {
     if (!reviewData) return;
     if (newQty <= 0) return;
@@ -288,6 +330,21 @@ export default function ShopkeeperInventoryApp() {
       ...item,
       quantity: newQty,
       newProjectedStock: newStock,
+    };
+
+    setReviewData({ ...reviewData, changes: updated });
+  };
+
+  const capToAvailableStock = (index: number) => {
+    if (!reviewData) return;
+    const updated = [...reviewData.changes];
+    const item = updated[index];
+    const maxQty = Math.max(0, item.currentStock);
+
+    updated[index] = {
+      ...item,
+      quantity: maxQty,
+      newProjectedStock: 0,
     };
 
     setReviewData({ ...reviewData, changes: updated });
@@ -315,9 +372,25 @@ export default function ShopkeeperInventoryApp() {
     setReviewData({ ...reviewData, changes: updated });
   };
 
-  // 6. Confirm changes -> calls /api/inventory/confirm
+  // Check if any proposed change has insufficient stock
+  const hasInsufficientStock = useMemo(() => {
+    if (!reviewData) return false;
+    return reviewData.changes.some(
+      (item) => item.action === 'SALE' && item.quantity > item.currentStock
+    );
+  }, [reviewData]);
+
+  // 7. Confirm changes -> calls /api/inventory/confirm
   const handleConfirmUpdates = async () => {
-    if (!reviewData || reviewData.changes.length === 0) return;
+    if (!reviewData || reviewData.changes.length === 0 || confirmingUpdates) return;
+
+    if (hasInsufficientStock) {
+      showFeedback(
+        'error',
+        'Cannot confirm: Some items exceed available stock. Adjust quantities before updating.'
+      );
+      return;
+    }
 
     try {
       setConfirmingUpdates(true);
@@ -362,7 +435,7 @@ export default function ShopkeeperInventoryApp() {
     }
   };
 
-  // 7. Computed Categories & Filtered Inventory
+  // Computed Categories & Filtered Inventory
   const categories = useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => {
@@ -392,9 +465,9 @@ export default function ShopkeeperInventoryApp() {
         });
       }
     });
-    return logs.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    ).slice(0, 8);
+    return logs
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 8);
   }, [products]);
 
   const formatSeconds = (sec: number) => {
@@ -419,18 +492,33 @@ export default function ShopkeeperInventoryApp() {
                   Shopkeeper Voice AI
                 </span>
               </h1>
-              <p className="text-xs text-slate-400">Speak in Hindi, English, or Hinglish</p>
+              <p className="text-xs text-slate-400">Hindi • English • Hinglish</p>
             </div>
           </div>
 
-          <button
-            onClick={fetchInventory}
-            disabled={loadingProducts}
-            title="Refresh Inventory"
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700"
-          >
-            <RefreshCw className={`w-4 h-4 ${loadingProducts ? 'animate-spin' : ''}`} />
-          </button>
+          {/* Header Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Reset Demo Data Button */}
+            <button
+              onClick={handleResetDemoData}
+              disabled={resettingDemo}
+              title="Reset inventory to initial demo data"
+              className="px-3 py-2 rounded-xl bg-amber-950/80 hover:bg-amber-900/80 text-amber-300 text-xs font-bold border border-amber-600/50 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${resettingDemo ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Reset Demo</span>
+            </button>
+
+            {/* Refresh Inventory Button */}
+            <button
+              onClick={fetchInventory}
+              disabled={loadingProducts}
+              title="Refresh Inventory"
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingProducts ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -481,12 +569,12 @@ export default function ShopkeeperInventoryApp() {
               <button
                 type="button"
                 onClick={isRecording ? stopRecording : startRecording}
-                disabled={processingAI}
+                disabled={processingAI || confirmingUpdates}
                 className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full flex flex-col items-center justify-center text-white font-bold transition-all shadow-2xl relative z-10 active:scale-95 ${
                   isRecording
                     ? 'bg-rose-600 hover:bg-rose-700 ring-4 ring-rose-400/50'
                     : 'bg-emerald-600 hover:bg-emerald-500 ring-4 ring-emerald-500/20 hover:ring-emerald-500/40'
-                } ${processingAI ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${processingAI || confirmingUpdates ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isRecording ? (
                   <>
@@ -502,16 +590,21 @@ export default function ShopkeeperInventoryApp() {
               </button>
             </div>
 
-            {/* Recording Timer & Waveform Effect */}
+            {/* Clear Loading States */}
             {isRecording ? (
               <div className="mt-4 flex items-center gap-2 text-rose-400 font-mono text-base font-bold animate-pulse">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                Recording: {formatSeconds(recordingTime)}
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                Listening... ({formatSeconds(recordingTime)})
               </div>
             ) : processingAI ? (
-              <div className="mt-4 flex items-center gap-2 text-emerald-400 font-medium text-sm animate-pulse">
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                AI is parsing inventory changes...
+              <div className="mt-4 flex items-center gap-2 text-emerald-400 font-semibold text-sm animate-pulse">
+                <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                Decoding voice note with AI...
+              </div>
+            ) : confirmingUpdates ? (
+              <div className="mt-4 flex items-center gap-2 text-cyan-400 font-semibold text-sm animate-pulse">
+                <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
+                Updating ledger...
               </div>
             ) : (
               <div className="mt-3 text-xs text-slate-400">Tap to start speaking, tap again to process</div>
@@ -520,7 +613,7 @@ export default function ShopkeeperInventoryApp() {
 
           {/* Quick Voice Prompt Examples */}
           <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
-            <span className="text-xs text-slate-400 mr-1">Try saying:</span>
+            <span className="text-xs text-slate-400 mr-1">Quick Test:</span>
             {[
               'Sold 2 packets of milk',
               'Sold 1.5 kg sugar',
@@ -545,12 +638,12 @@ export default function ShopkeeperInventoryApp() {
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
               placeholder="Or type here (e.g. 5 milk sale, 10 rice restock)..."
-              disabled={processingAI || isRecording}
+              disabled={processingAI || isRecording || confirmingUpdates}
               className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <button
               type="submit"
-              disabled={!textInput.trim() || processingAI}
+              disabled={!textInput.trim() || processingAI || confirmingUpdates}
               className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm text-white flex items-center gap-1.5 transition-colors"
             >
               <Send className="w-4 h-4" />
@@ -559,7 +652,7 @@ export default function ShopkeeperInventoryApp() {
           </form>
         </section>
 
-        {/* SECTION 2: CONFIRMATION MODAL / REVIEW CARD (CRUCIAL STEP) */}
+        {/* SECTION 2: CONFIRMATION MODAL / REVIEW CARD */}
         {reviewData && (
           <section className="bg-slate-800 border-2 border-emerald-500/60 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in duration-200">
             <div className="flex items-start justify-between border-b border-slate-700 pb-3">
@@ -589,12 +682,22 @@ export default function ShopkeeperInventoryApp() {
               </div>
             </div>
 
+            {/* Insufficient Stock Warning Banner */}
+            {hasInsufficientStock && (
+              <div className="p-3.5 bg-rose-950/80 border border-rose-500/60 rounded-xl text-rose-200 text-xs flex items-center gap-2.5">
+                <AlertTriangle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+                <div>
+                  <strong>Insufficient Stock Alert:</strong> One or more items exceed current store stock. Please reduce the quantity or click &ldquo;Cap to Stock&rdquo; below.
+                </div>
+              </div>
+            )}
+
             {/* Unrecognized items alert */}
             {reviewData.unrecognizedItems.length > 0 && (
               <div className="p-3 bg-amber-950/60 border border-amber-500/40 rounded-xl text-amber-200 text-xs flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
                 <span>
-                  <strong>Unrecognized items:</strong> {reviewData.unrecognizedItems.join(', ')} (not found in current catalog).
+                  <strong>Unrecognized items:</strong> {reviewData.unrecognizedItems.join(', ')} (not found in catalog).
                 </span>
               </div>
             )}
@@ -606,101 +709,115 @@ export default function ShopkeeperInventoryApp() {
               </div>
             ) : (
               <div className="space-y-3">
-                {reviewData.changes.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-xl bg-slate-900/70 border border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    {/* Product & Action Badge */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-white text-base">{item.productName}</span>
-                        <button
-                          type="button"
-                          onClick={() => toggleAction(idx)}
-                          title="Click to toggle SALE / RESTOCK"
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border cursor-pointer ${
-                            item.action === 'SALE'
-                              ? 'bg-rose-950 text-rose-300 border-rose-700/60'
-                              : 'bg-emerald-950 text-emerald-300 border-emerald-700/60'
-                          }`}
-                        >
-                          {item.action === 'SALE' ? (
-                            <>
-                              <ArrowDownRight className="w-3 h-3 text-rose-400" /> -{item.quantity} {item.unit} SALE
-                            </>
-                          ) : (
-                            <>
-                              <ArrowUpRight className="w-3 h-3 text-emerald-400" /> +{item.quantity} {item.unit} RESTOCK
-                            </>
-                          )}
-                        </button>
-                      </div>
+                {reviewData.changes.map((item, idx) => {
+                  const isExceedingStock = item.action === 'SALE' && item.quantity > item.currentStock;
 
-                      {/* Stock projection */}
-                      <div className="text-xs text-slate-400 flex items-center gap-2">
-                        <span>Current: <strong className="text-slate-200">{item.currentStock} {item.unit}</strong></span>
-                        <span>→</span>
-                        <span>
-                          New Projected:{' '}
-                          <strong
-                            className={
-                              item.newProjectedStock < 0
-                                ? 'text-rose-400'
-                                : item.newProjectedStock < 10
-                                ? 'text-amber-400'
-                                : 'text-emerald-400'
-                            }
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-4 rounded-xl bg-slate-900/70 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isExceedingStock
+                          ? 'border-rose-500/80 ring-1 ring-rose-500/40'
+                          : 'border-slate-700/80'
+                      }`}
+                    >
+                      {/* Product & Action Badge */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-white text-base">{item.productName}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleAction(idx)}
+                            title="Click to toggle SALE / RESTOCK"
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border cursor-pointer ${
+                              item.action === 'SALE'
+                                ? 'bg-rose-950 text-rose-300 border-rose-700/60'
+                                : 'bg-emerald-950 text-emerald-300 border-emerald-700/60'
+                            }`}
                           >
-                            {item.newProjectedStock} {item.unit}
-                          </strong>
-                        </span>
-                        {item.newProjectedStock < 0 && (
-                          <span className="text-rose-400 font-bold text-xs">(Insufficient Stock!)</span>
-                        )}
-                      </div>
-                    </div>
+                            {item.action === 'SALE' ? (
+                              <>
+                                <ArrowDownRight className="w-3 h-3 text-rose-400" /> -{item.quantity} {item.unit} SALE
+                              </>
+                            ) : (
+                              <>
+                                <ArrowUpRight className="w-3 h-3 text-emerald-400" /> +{item.quantity} {item.unit} RESTOCK
+                              </>
+                            )}
+                          </button>
+                        </div>
 
-                    {/* Stepper Quantity & Delete Row */}
-                    <div className="flex items-center gap-2 self-end sm:self-center">
-                      <div className="flex items-center bg-slate-800 rounded-lg border border-slate-700">
+                        {/* Stock projection */}
+                        <div className="text-xs text-slate-400 flex flex-wrap items-center gap-2">
+                          <span>Current: <strong className="text-slate-200">{item.currentStock} {item.unit}</strong></span>
+                          <span>→</span>
+                          <span>
+                            New Projected:{' '}
+                            <strong
+                              className={
+                                isExceedingStock
+                                  ? 'text-rose-400 font-bold'
+                                  : item.newProjectedStock < 10
+                                  ? 'text-amber-400 font-bold'
+                                  : 'text-emerald-400 font-bold'
+                              }
+                            >
+                              {item.newProjectedStock} {item.unit}
+                            </strong>
+                          </span>
+                          {isExceedingStock && (
+                            <button
+                              type="button"
+                              onClick={() => capToAvailableStock(idx)}
+                              className="text-[11px] px-2 py-0.5 rounded bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-500/50 font-semibold"
+                            >
+                              Cap to available ({item.currentStock} {item.unit})
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Stepper Quantity & Delete Row */}
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <div className="flex items-center bg-slate-800 rounded-lg border border-slate-700">
+                          <button
+                            type="button"
+                            onClick={() => updateChangeQuantity(idx, Math.max(0.5, item.quantity - 1))}
+                            className="p-2 hover:bg-slate-700 text-slate-300 rounded-l-lg"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <input
+                            type="number"
+                            step="0.5"
+                            min="0.1"
+                            value={item.quantity}
+                            onChange={(e) => updateChangeQuantity(idx, parseFloat(e.target.value) || 0)}
+                            className="w-14 bg-transparent text-center font-bold text-sm text-white focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateChangeQuantity(idx, item.quantity + 1)}
+                            className="p-2 hover:bg-slate-700 text-slate-300 rounded-r-lg"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <span className="text-xs text-slate-400 w-10">{item.unit}</span>
+
                         <button
                           type="button"
-                          onClick={() => updateChangeQuantity(idx, Math.max(0.5, item.quantity - 1))}
-                          className="p-2 hover:bg-slate-700 text-slate-300 rounded-l-lg"
+                          onClick={() => removeChangeItem(idx)}
+                          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors"
+                          title="Remove Item"
                         >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <input
-                          type="number"
-                          step="0.5"
-                          min="0.1"
-                          value={item.quantity}
-                          onChange={(e) => updateChangeQuantity(idx, parseFloat(e.target.value) || 0)}
-                          className="w-14 bg-transparent text-center font-bold text-sm text-white focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => updateChangeQuantity(idx, item.quantity + 1)}
-                          className="p-2 hover:bg-slate-700 text-slate-300 rounded-r-lg"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-
-                      <span className="text-xs text-slate-400 w-10">{item.unit}</span>
-
-                      <button
-                        type="button"
-                        onClick={() => removeChangeItem(idx)}
-                        className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors"
-                        title="Remove Item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -709,13 +826,18 @@ export default function ShopkeeperInventoryApp() {
               <button
                 type="button"
                 onClick={handleConfirmUpdates}
-                disabled={confirmingUpdates || reviewData.changes.length === 0}
+                disabled={confirmingUpdates || reviewData.changes.length === 0 || hasInsufficientStock}
                 className="flex-1 py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-white text-base flex items-center justify-center gap-2 transition-all shadow-lg active:scale-98"
               >
                 {confirmingUpdates ? (
                   <>
                     <RefreshCw className="w-5 h-5 animate-spin" />
-                    Committing to Database...
+                    Updating ledger...
+                  </>
+                ) : hasInsufficientStock ? (
+                  <>
+                    <AlertTriangle className="w-5 h-5 text-amber-300" />
+                    Fix Insufficient Stock to Confirm
                   </>
                 ) : (
                   <>
@@ -847,7 +969,9 @@ export default function ShopkeeperInventoryApp() {
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Layers className="w-5 h-5 text-emerald-400" /> Recent Voice Transactions
             </h2>
-            <span className="text-xs text-slate-400">Audit Trail</span>
+            <span className="text-xs text-slate-400 flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Immutable Audit Trail
+            </span>
           </div>
 
           {recentLogs.length === 0 ? (

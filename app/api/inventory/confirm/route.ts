@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ActionType } from '@prisma/client';
 
-export const runtime = 'nodejs';
-
 export interface InventoryChangeRequest {
   productId: string;
   action: 'SALE' | 'RESTOCK';

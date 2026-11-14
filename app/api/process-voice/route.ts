@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { processVoiceOrText } from '@/lib/ai';
 
-// Disable Edge runtime; ensure strict Node.js server-side execution for Buffer & DB access
-export const runtime = 'nodejs';
-
 /**
  * POST /app/api/process-voice
  * 
@@ -60,6 +57,14 @@ export async function POST(request: NextRequest) {
     if (!audioBuffer && !rawText) {
       return NextResponse.json(
         { error: 'No audio file or text payload provided.' },
+        { status: 400 }
+      );
+    }
+
+    // Check for empty or negligible audio clips (< 400 bytes)
+    if (audioBuffer && audioBuffer.length < 400 && !rawText) {
+      return NextResponse.json(
+        { error: 'Audio recording was too short or empty. Please speak clearly into the microphone.' },
         { status: 400 }
       );
     }
