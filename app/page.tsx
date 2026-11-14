@@ -722,30 +722,35 @@ export default function TalkStockExactUI() {
 
             {/* Lower Sidebar: Voice Ready Card & Light Mode Toggle */}
             <div className="space-y-3 pt-6">
-              {/* Voice Ready Card */}
+              {/* Voice Ready Card - Organized sideways */}
               <div
                 onClick={isRecording ? stopRecording : startRecording}
-                className="bg-white/80 hover:bg-white rounded-2xl p-4 border border-blue-100 shadow-sm flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:shadow"
+                className="bg-white/90 hover:bg-white rounded-2xl p-3.5 border border-blue-100 shadow-2xs flex items-center gap-3 cursor-pointer transition-all hover:shadow-sm"
               >
-                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-1.5">
-                  <Mic className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  isRecording ? 'bg-rose-100 text-rose-600' : 'bg-blue-50 text-blue-600'
+                }`}>
+                  <Mic className={`w-5 h-5 ${isRecording ? 'animate-pulse text-rose-600' : ''}`} />
                 </div>
-                <div className="text-xs font-black text-slate-800">
-                  {isRecording ? 'Listening...' : 'Voice Ready'}
-                </div>
-                <div className="text-[10px] text-slate-400 font-medium">Say something...</div>
-
-                {/* Animated sound waves */}
-                <div className="flex items-center justify-center gap-1 h-5 mt-2">
-                  {[6, 12, 18, 10, 16, 8, 14, 6].map((h, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        height: isRecording ? `${Math.min(18, Math.max(4, (h * 1.5) % 18))}px` : `${h}px`,
-                      }}
-                      className="w-1 rounded-full bg-blue-400/80 transition-all duration-200"
-                    />
-                  ))}
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-black text-slate-800 leading-tight">
+                    {isRecording ? 'Listening...' : 'Voice Ready'}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
+                    {isRecording ? `${formatSeconds(recordingTime)} elapsed` : 'Say something...'}
+                  </div>
+                  {/* Animated sound waves sideways */}
+                  <div className="flex items-center gap-0.5 h-3 mt-1.5">
+                    {[6, 12, 18, 10, 16, 8, 14, 6].map((h, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          height: isRecording ? `${Math.min(12, Math.max(3, (h * 1.3) % 12))}px` : `${Math.round(h * 0.55)}px`,
+                        }}
+                        className={`w-0.5 rounded-full transition-all duration-200 ${isRecording ? 'bg-rose-500' : 'bg-blue-500'}`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -787,6 +792,101 @@ export default function TalkStockExactUI() {
               </div>
             </div>
 
+            {/* Horizontal Navigation Tabs (Icons Organized Sideways in a Row) */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                onClick={() => {
+                  setActiveTab('home');
+                  setActiveModal('none');
+                }}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeTab === 'home' && activeModal === 'none'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+                }`}
+              >
+                <Home className="w-3.5 h-3.5" />
+                <span>Home</span>
+              </button>
+
+              <button
+                onClick={() => openView('products')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeModal === 'products'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+                }`}
+              >
+                <Box className="w-3.5 h-3.5" />
+                <span>Products ({productTypesCount})</span>
+              </button>
+
+              <button
+                onClick={() => openView('leftover')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeModal === 'leftover'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+                }`}
+              >
+                <Gift className="w-3.5 h-3.5" />
+                <span>Leftover Stock</span>
+              </button>
+
+              <button
+                onClick={() => openView('alerts')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeModal === 'alerts'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+                }`}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>Alerts</span>
+                {lowStockProducts.length > 0 && (
+                  <span className="w-4.5 h-4.5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center">
+                    {lowStockProducts.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => openView('history')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeModal === 'history'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+                }`}
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                <span>Audit Logs</span>
+              </button>
+
+              <button
+                onClick={() => openView('settings')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeModal === 'settings'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+                }`}
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Settings</span>
+              </button>
+
+              <button
+                onClick={() => openView('about')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeModal === 'about'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+                }`}
+              >
+                <Info className="w-3.5 h-3.5" />
+                <span>About</span>
+              </button>
+            </div>
+
             {/* Global Feedback Banner */}
             {feedback && (
               <div
@@ -810,69 +910,84 @@ export default function TalkStockExactUI() {
             )}
 
             {/* ───────────────────────────────────────────────────────────── */}
-            {/* ROW 1: THREE METRICS CARDS (Total Products, Low Stock, Details) */}
+            {/* ROW 1: THREE METRICS CARDS (ICONS ORGANIZED SIDEWAYS)         */}
             {/* ───────────────────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Card 1: Total Products */}
+              {/* Card 1: Total Products - Icon on Left, Text on Right */}
               <div
                 onClick={() => openView('products')}
-                className="bg-[#EEF5FF] rounded-2xl p-5 border border-blue-100/90 shadow-2xs flex flex-col justify-between hover:shadow-sm transition-all cursor-pointer"
+                className="bg-gradient-to-br from-[#EEF5FF] to-[#E2EDFE] rounded-2xl p-4.5 border border-blue-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
               >
-                <div>
-                  <div className="w-11 h-11 flex items-center justify-center mb-2 text-blue-600">
-                    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill="#3B82F6" fillOpacity="0.2" stroke="#2563EB" strokeWidth="3" strokeLinejoin="round"/>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-13 h-13 rounded-2xl bg-white/90 border border-blue-200/80 shadow-2xs flex items-center justify-center shrink-0 text-blue-600">
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill="#3B82F6" fillOpacity="0.25" stroke="#2563EB" strokeWidth="3" strokeLinejoin="round"/>
                       <path d="M24 4V24M24 24L42 14M24 24L6 14" stroke="#2563EB" strokeWidth="3" strokeLinejoin="round"/>
                       <path d="M24 24V44" stroke="#2563EB" strokeWidth="3"/>
                     </svg>
                   </div>
-                  <div className="text-3xl font-black text-slate-900 leading-tight">{productTypesCount}</div>
-                  <div className="text-xs font-semibold text-slate-500 mt-1">Total Products</div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-500">Total Products</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-none mt-0.5">{productTypesCount}</div>
+                  </div>
+                </div>
+                <div className="text-blue-600 text-xs font-bold flex items-center gap-0.5 opacity-80 hover:opacity-100">
+                  <span>Manage</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
 
-              {/* Card 2: Low Stock Alerts */}
+              {/* Card 2: Low Stock Alerts - Icon on Left, Text on Right */}
               <div
                 onClick={() => openView('alerts')}
-                className="bg-[#EEFAF3] rounded-2xl p-5 border border-emerald-100/90 shadow-2xs flex flex-col justify-between hover:shadow-sm transition-all cursor-pointer"
+                className="bg-gradient-to-br from-[#EEFAF3] to-[#E0F7EB] rounded-2xl p-4.5 border border-emerald-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
               >
-                <div>
-                  <div className="w-11 h-11 flex items-center justify-center mb-2 text-emerald-600">
-                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-13 h-13 rounded-2xl bg-white/90 border border-emerald-200/80 shadow-2xs flex items-center justify-center shrink-0 text-emerald-600">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
                       <line x1="12" y1="9" x2="12" y2="13"/>
                       <line x1="12" y1="17" x2="12.01" y2="17"/>
                     </svg>
                   </div>
-                  <div className="text-3xl font-black text-slate-900 leading-tight">{lowStockProducts.length}</div>
-                  <div className="text-xs font-semibold text-slate-500 mt-1">Low Stock Alerts</div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-500">Low Stock Alerts</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-none mt-0.5">{lowStockProducts.length}</div>
+                  </div>
+                </div>
+                <div className="text-emerald-700 text-xs font-bold flex items-center gap-0.5 opacity-80 hover:opacity-100">
+                  <span>View All</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
 
-              {/* Card 3: Leftover Stock & View Details */}
+              {/* Card 3: Leftover Stock - Icon on Left, Text on Right */}
               <div
                 onClick={() => openView('leftover')}
-                className="bg-[#F5EFFE] rounded-2xl p-5 border border-purple-100/90 shadow-2xs flex flex-col justify-between hover:shadow-sm transition-all cursor-pointer"
+                className="bg-gradient-to-br from-[#F5EFFE] to-[#EBE2FC] rounded-2xl p-4.5 border border-purple-200/70 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between"
               >
-                <div>
-                  <div className="w-11 h-11 flex items-center justify-center mb-2 text-purple-600">
-                    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill="#A855F7" fillOpacity="0.25" stroke="#9333EA" strokeWidth="3" strokeLinejoin="round"/>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-13 h-13 rounded-2xl bg-white/90 border border-purple-200/80 shadow-2xs flex items-center justify-center shrink-0 text-purple-600">
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill="#A855F7" fillOpacity="0.3" stroke="#9333EA" strokeWidth="3" strokeLinejoin="round"/>
                       <path d="M24 4V24M24 24L42 14M24 24L6 14" stroke="#9333EA" strokeWidth="3" strokeLinejoin="round"/>
                       <path d="M24 24V44" stroke="#9333EA" strokeWidth="3"/>
                     </svg>
                   </div>
-                  <div className="text-3xl font-black text-slate-900 leading-tight">{leftoverStockTotal}</div>
-                  <div className="text-xs font-bold text-purple-700 mt-2 flex items-center gap-1">
-                    <span>View Details</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                  <div>
+                    <div className="text-xs font-bold text-slate-500">Leftover Stock</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 leading-none mt-0.5">{leftoverStockTotal}</div>
                   </div>
+                </div>
+                <div className="text-purple-700 text-xs font-bold flex items-center gap-0.5 opacity-80 hover:opacity-100">
+                  <span>View Details</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
             </div>
 
             {/* ───────────────────────────────────────────────────────────── */}
-            {/* ROW 2: QUICK ACTIONS (Reset Demo, Refresh, Settings, Voice)   */}
+            {/* ROW 2: QUICK ACTIONS (ICONS ORGANIZED SIDEWAYS)               */}
             {/* ───────────────────────────────────────────────────────────── */}
             <div className="space-y-3 pt-1">
               <div className="flex items-center justify-between">
@@ -889,47 +1004,67 @@ export default function TalkStockExactUI() {
                 </button>
               </div>
 
-              {/* 4 Colored Action Buttons matching screenshot */}
+              {/* 4 Colored Action Buttons - Icons on Left, Text on Right */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* 1. Reset Demo */}
                 <button
                   onClick={handleResetDemoData}
                   disabled={resettingDemo}
-                  className="bg-[#EAF2FD] hover:bg-blue-100/80 text-blue-800 border border-blue-200/60 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-98"
+                  className="bg-[#EAF2FD]/90 hover:bg-[#EAF2FD] text-blue-900 border border-blue-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
                 >
-                  <RotateCcw className={`w-7 h-7 text-[#2563EB] ${resettingDemo ? 'animate-spin' : ''}`} />
-                  <span className="text-xs font-bold text-slate-800">Reset Demo</span>
+                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-blue-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#2563EB]">
+                    <RotateCcw className={`w-4.5 h-4.5 ${resettingDemo ? 'animate-spin' : ''}`} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="text-xs font-extrabold text-slate-900 block truncate">Reset Demo</span>
+                    <span className="text-[10px] text-blue-600 font-semibold block">Restore stock</span>
+                  </div>
                 </button>
 
                 {/* 2. Refresh */}
                 <button
                   onClick={fetchInventory}
                   disabled={loadingProducts}
-                  className="bg-[#EAF8F1] hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/60 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-98"
+                  className="bg-[#EAF8F1]/90 hover:bg-[#EAF8F1] text-emerald-900 border border-emerald-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
                 >
-                  <RefreshCw className={`w-7 h-7 text-[#059669] ${loadingProducts ? 'animate-spin' : ''}`} />
-                  <span className="text-xs font-bold text-slate-800">Refresh</span>
+                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-emerald-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#059669]">
+                    <RefreshCw className={`w-4.5 h-4.5 ${loadingProducts ? 'animate-spin' : ''}`} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="text-xs font-extrabold text-slate-900 block truncate">Refresh</span>
+                    <span className="text-[10px] text-emerald-600 font-semibold block">Sync SQLite</span>
+                  </div>
                 </button>
 
                 {/* 3. Settings */}
                 <button
                   onClick={() => openView('settings')}
-                  className="bg-[#F3EDFD] hover:bg-purple-100/80 text-purple-800 border border-purple-200/60 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-98"
+                  className="bg-[#F3EDFD]/90 hover:bg-[#F3EDFD] text-purple-900 border border-purple-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
                 >
-                  <Settings className="w-7 h-7 text-[#7C3AED]" />
-                  <span className="text-xs font-bold text-slate-800">Settings</span>
+                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-purple-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#7C3AED]">
+                    <Settings className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="text-xs font-extrabold text-slate-900 block truncate">Settings</span>
+                    <span className="text-[10px] text-purple-600 font-semibold block">Config &amp; AI</span>
+                  </div>
                 </button>
 
                 {/* 4. Voice Command */}
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
                   disabled={processingAI || confirmingUpdates}
-                  className="bg-[#ECF4FE] hover:bg-sky-100/80 text-blue-800 border border-sky-200/60 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-98"
+                  className="bg-[#ECF4FE]/90 hover:bg-[#ECF4FE] text-sky-900 border border-sky-200/70 rounded-2xl p-3.5 flex items-center gap-3 transition-all cursor-pointer shadow-2xs hover:shadow-sm active:scale-98"
                 >
-                  <Mic className={`w-7 h-7 text-[#2563EB] ${isRecording ? 'animate-pulse text-rose-600' : ''}`} />
-                  <span className="text-xs font-bold text-slate-800">
-                    {isRecording ? 'Stop Mic' : 'Voice Command'}
-                  </span>
+                  <div className="w-10 h-10 rounded-xl bg-white/90 border border-sky-200/70 flex items-center justify-center shrink-0 shadow-2xs text-[#2563EB]">
+                    <Mic className={`w-4.5 h-4.5 ${isRecording ? 'animate-pulse text-rose-600' : ''}`} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="text-xs font-extrabold text-slate-900 block truncate">
+                      {isRecording ? 'Stop Mic' : 'Voice Command'}
+                    </span>
+                    <span className="text-[10px] text-blue-600 font-semibold block">Speak now</span>
+                  </div>
                 </button>
               </div>
             </div>
@@ -983,34 +1118,35 @@ export default function TalkStockExactUI() {
                     )}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    Say something like:
+                    Say natural voice commands or click an example prompt below:
                   </p>
 
-                  {/* Speech bubble exactly like figure */}
-                  <div className="mt-2 p-3 bg-white/95 rounded-2xl border border-blue-200/80 shadow-xs flex items-start gap-2.5">
-                    <MessageSquare className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                    <div className="text-xs font-semibold text-slate-700 leading-relaxed">
-                      <span
-                        onClick={() => setTextInput('Update rice count to 50')}
-                        className="hover:text-blue-600 cursor-pointer"
-                      >
-                        &ldquo;Update rice count to 50&rdquo;
-                      </span>{' '}
-                      <span className="text-slate-300">|</span>{' '}
-                      <span
-                        onClick={() => setTextInput('Sold 5 packets of milk')}
-                        className="hover:text-blue-600 cursor-pointer"
-                      >
-                        &ldquo;Sold 5 packets of milk&rdquo;
-                      </span>
-                      <br />
-                      <span
-                        onClick={() => setTextInput('2 kg sugar left')}
-                        className="hover:text-blue-600 cursor-pointer text-slate-500 font-medium"
-                      >
-                        &ldquo;2 kg sugar left&rdquo;
-                      </span>
-                    </div>
+                  {/* Interactive suggestion chips organized sideways */}
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTextInput('Update rice count to 50')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-blue-200/80 shadow-2xs text-xs font-semibold cursor-pointer transition-all hover:border-blue-400 active:scale-95"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span>&ldquo;Update rice count to 50&rdquo;</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTextInput('Sold 5 packets of milk')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-emerald-600 border border-blue-200/80 shadow-2xs text-xs font-semibold cursor-pointer transition-all hover:border-emerald-400 active:scale-95"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span>&ldquo;Sold 5 packets of milk&rdquo;</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTextInput('2 kg sugar left')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-700 hover:text-purple-600 border border-blue-200/80 shadow-2xs text-xs font-semibold cursor-pointer transition-all hover:border-purple-400 active:scale-95"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                      <span>&ldquo;2 kg sugar left&rdquo;</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1021,14 +1157,14 @@ export default function TalkStockExactUI() {
                   type="text"
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  placeholder="Or type inventory command here..."
+                  placeholder="Or type inventory command here (e.g. 'Sold 5 packets milk and 2 kg sugar')..."
                   disabled={processingAI || isRecording || confirmingUpdates}
                   className="flex-1 bg-white border border-blue-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={!textInput.trim() || processingAI || confirmingUpdates}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Send</span>
@@ -1193,79 +1329,139 @@ export default function TalkStockExactUI() {
             )}
 
             {/* ───────────────────────────────────────────────────────────── */}
-            {/* ROW 4: DASHBOARD OVERVIEW (Smooth SVG Curve Chart)            */}
+            {/* ROW 4: DASHBOARD OVERVIEW & RECENT ACTIVITY (SIDE-BY-SIDE)    */}
             {/* ───────────────────────────────────────────────────────────── */}
-            <section className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-black text-slate-900 text-sm">
-                  <BarChart2 className="w-4 h-4 text-blue-600" />
-                  <span>Dashboard Overview</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Left Column: Dashboard Overview Chart (2 Cols) */}
+              <section className="lg:col-span-2 bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-black text-slate-900 text-sm">
+                    <BarChart2 className="w-4 h-4 text-blue-600" />
+                    <span>Dashboard Overview</span>
+                  </div>
+
+                  <div
+                    onClick={() => showFeedback('info', 'Filter: This Month view')}
+                    className="text-xs font-bold px-3 py-1 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-slate-50"
+                  >
+                    <span>This Month</span>
+                    <span className="text-[10px]">▾</span>
+                  </div>
                 </div>
 
-                <div
-                  onClick={() => showFeedback('info', 'Filter: This Month view')}
-                  className="text-xs font-bold px-3 py-1 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center gap-1 cursor-pointer shadow-2xs hover:bg-slate-50"
+                {/* Exact Smooth Curve Line Chart with Y-axis & X-axis */}
+                <div className="h-44 relative w-full pt-2">
+                  <svg className="w-full h-full overflow-visible" viewBox="0 0 580 150" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="dashboardAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.22" />
+                        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Y-Axis Label Numbers */}
+                    <text x="22" y="24" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="end">100</text>
+                    <text x="22" y="74" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="end">50</text>
+                    <text x="22" y="124" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="end">0</text>
+
+                    {/* Horizontal grid lines */}
+                    <line x1="30" y1="20" x2="570" y2="20" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1="30" y1="70" x2="570" y2="70" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1="30" y1="120" x2="570" y2="120" stroke="#E2E8F0" strokeWidth="1.5" />
+
+                    {/* Area fill */}
+                    <path
+                      d="M 50,78 C 90,68 105,50 135,50 C 170,50 190,18 222,18 C 255,18 275,42 308,42 C 340,42 360,70 395,70 C 428,70 450,58 482,58 C 515,58 535,32 560,32 L 560,120 L 50,120 Z"
+                      fill="url(#dashboardAreaGradient)"
+                    />
+
+                    {/* Smooth curved blue stroke */}
+                    <path
+                      d="M 50,78 C 90,68 105,50 135,50 C 170,50 190,18 222,18 C 255,18 275,42 308,42 C 340,42 360,70 395,70 C 428,70 450,58 482,58 C 515,58 535,32 560,32"
+                      fill="none"
+                      stroke="#2563EB"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Circle points on line matching each day */}
+                    <circle cx="50" cy="78" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
+                    <circle cx="135" cy="50" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
+                    <circle cx="222" cy="18" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
+                    <circle cx="308" cy="42" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
+                    <circle cx="395" cy="70" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
+                    <circle cx="482" cy="58" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
+                    <circle cx="560" cy="32" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
+
+                    {/* Weekday Axis aligned under each circle */}
+                    <text x="50" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Mon</text>
+                    <text x="135" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Tue</text>
+                    <text x="222" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Wed</text>
+                    <text x="308" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Thu</text>
+                    <text x="395" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Fri</text>
+                    <text x="482" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Sat</text>
+                    <text x="560" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Sun</text>
+                  </svg>
+                </div>
+              </section>
+
+              {/* Right Column: Recent Activity Feed (Sideways items) */}
+              <section className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3">
+                <div>
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div className="flex items-center gap-2 font-black text-slate-900 text-sm">
+                      <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                      <span>Recent Activity</span>
+                    </div>
+                    <button
+                      onClick={() => openView('history')}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+                    >
+                      View All →
+                    </button>
+                  </div>
+
+                  {/* Sideways Activity Items */}
+                  <div className="space-y-2.5 pt-2">
+                    {recentLogs.slice(0, 4).map((log, i) => (
+                      <div
+                        key={log.id || i}
+                        onClick={() => openView('history')}
+                        className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer text-xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${
+                            log.actionType === 'SALE' ? 'bg-rose-500' : 'bg-emerald-500'
+                          }`} />
+                          <div className="truncate">
+                            <span className="font-bold text-slate-800">{log.productName || 'Product'}</span>
+                            <span className="text-slate-400 text-[11px] ml-1.5">
+                              {log.actionType === 'SALE' ? `-${log.quantityChanged}` : `+${log.quantityChanged}`}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-2">
+                          {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ))}
+                    {recentLogs.length === 0 && (
+                      <div className="py-6 text-center text-slate-400 text-xs">
+                        No recent activity yet. Speak a voice note to start!
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => openView('products')}
+                  className="w-full py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>This Month</span>
-                  <span className="text-[10px]">▾</span>
-                </div>
-              </div>
-
-              {/* Exact Smooth Curve Line Chart with Y-axis & X-axis */}
-              <div className="h-44 relative w-full pt-2">
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 580 150" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="dashboardAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.22" />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Y-Axis Label Numbers matching screenshot */}
-                  <text x="22" y="24" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="end">100</text>
-                  <text x="22" y="74" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="end">50</text>
-                  <text x="22" y="124" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="end">0</text>
-
-                  {/* Horizontal grid lines */}
-                  <line x1="30" y1="20" x2="570" y2="20" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
-                  <line x1="30" y1="70" x2="570" y2="70" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
-                  <line x1="30" y1="120" x2="570" y2="120" stroke="#E2E8F0" strokeWidth="1.5" />
-
-                  {/* Area fill */}
-                  <path
-                    d="M 50,78 C 90,68 105,50 135,50 C 170,50 190,18 222,18 C 255,18 275,42 308,42 C 340,42 360,70 395,70 C 428,70 450,58 482,58 C 515,58 535,32 560,32 L 560,120 L 50,120 Z"
-                    fill="url(#dashboardAreaGradient)"
-                  />
-
-                  {/* Smooth curved blue stroke */}
-                  <path
-                    d="M 50,78 C 90,68 105,50 135,50 C 170,50 190,18 222,18 C 255,18 275,42 308,42 C 340,42 360,70 395,70 C 428,70 450,58 482,58 C 515,58 535,32 560,32"
-                    fill="none"
-                    stroke="#2563EB"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                  />
-
-                  {/* Circle points on line matching each day */}
-                  <circle cx="50" cy="78" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
-                  <circle cx="135" cy="50" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
-                  <circle cx="222" cy="18" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
-                  <circle cx="308" cy="42" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
-                  <circle cx="395" cy="70" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
-                  <circle cx="482" cy="58" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
-                  <circle cx="560" cy="32" r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2.5" />
-
-                  {/* Weekday Axis aligned under each circle */}
-                  <text x="50" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Mon</text>
-                  <text x="135" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Tue</text>
-                  <text x="222" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Wed</text>
-                  <text x="308" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Thu</text>
-                  <text x="395" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Fri</text>
-                  <text x="482" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Sat</text>
-                  <text x="560" y="142" fill="#94A3B8" fontSize="11" fontWeight="600" textAnchor="middle">Sun</text>
-                </svg>
-              </div>
-            </section>
+                  <Box className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Open Full Inventory</span>
+                </button>
+              </section>
+            </div>
           </main>
         </div>
       </div>
