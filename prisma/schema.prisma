@@ -1,0 +1,44 @@
+// Prisma schema for Shopkeeper Inventory System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ActionType {
+  SALE
+  RESTOCK
+  ADJUSTMENT
+}
+
+model Product {
+  id           String           @id @default(uuid())
+  name         String           @unique
+  category     String
+  currentStock Float            @default(0.0) // Supports fractional units like 1.5 kg
+  unit         String           // e.g. 'kg', 'packets', 'liters', 'pieces'
+  pricePerUnit Float            @default(0.0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  transactions TransactionLog[]
+
+  @@index([category])
+  @@index([name])
+}
+
+model TransactionLog {
+  id              String     @id @default(uuid())
+  productId       String
+  product         Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  actionType      ActionType
+  quantityChanged Float      // Negative for SALE, positive for RESTOCK, signed for ADJUSTMENT
+  rawTranscript   String     // Original audio voice transcript or text command
+  createdAt       DateTime   @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
