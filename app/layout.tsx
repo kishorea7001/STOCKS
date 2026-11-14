@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'STOCKS - Voice Inventory Assistant',
-  description: 'AI-Powered Multilingual Voice Inventory for Retailers & Shopkeepers',
+  title: 'TalkStock - Smart Inventory, Powered by Voice',
+  description: 'Manage your business inventory with the power of voice. Colloquial Hinglish & Multimodal AI.',
 };
 
 export default function RootLayout({
@@ -12,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased dark">
-      <body className="min-h-full flex flex-col font-sans bg-slate-900 text-slate-100">
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-800 antialiased selection:bg-blue-100 selection:text-blue-900">
         {children}
       </body>
     </html>
