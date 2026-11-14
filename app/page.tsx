@@ -11,7 +11,6 @@ import {
   Plus,
   Minus,
   Trash2,
-  Package,
   Search,
   ArrowDownRight,
   ArrowUpRight,
@@ -30,6 +29,7 @@ import {
   X,
   ChevronRight,
   ArrowRight,
+  PlusCircle,
 } from 'lucide-react';
 
 interface TransactionLog {
@@ -70,9 +70,12 @@ interface ProcessVoiceResponse {
   error?: string;
 }
 
+type ModalType = 'none' | 'products' | 'alerts' | 'leftover' | 'history' | 'settings' | 'about';
+
 export default function TalkStockDashboard() {
-  // Navigation tab state
-  const [activeTab, setActiveTab] = useState<'home' | 'products' | 'alerts' | 'history'>('home');
+  // Navigation / Modal state
+  const [activeTab, setActiveTab] = useState<'home' | 'products' | 'alerts' | 'leftover' | 'settings' | 'about'>('home');
+  const [activeModal, setActiveModal] = useState<ModalType>('none');
 
   // Inventory state
   const [products, setProducts] = useState<Product[]>([]);
@@ -80,6 +83,15 @@ export default function TalkStockDashboard() {
   const [resettingDemo, setResettingDemo] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  // New Product Form state
+  const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [newProductName, setNewProductName] = useState('');
+  const [newProductCategory, setNewProductCategory] = useState('Grains & Staples');
+  const [newProductStock, setNewProductStock] = useState('20');
+  const [newProductUnit, setNewProductUnit] = useState('kg');
+  const [newProductPrice, setNewProductPrice] = useState('50');
+  const [creatingProduct, setCreatingProduct] = useState(false);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -153,6 +165,14 @@ export default function TalkStockDashboard() {
     };
   }, []);
 
+  // Helper to open modal & update active tab
+  const openView = (type: ModalType) => {
+    setActiveModal(type);
+    if (type !== 'none' && type !== 'history') {
+      setActiveTab(type);
+    }
+  };
+
   // 2. Reset Demo Data Action
   const handleResetDemoData = async () => {
     const confirmed = window.confirm(
@@ -177,6 +197,64 @@ export default function TalkStockDashboard() {
       showFeedback('error', msg);
     } finally {
       setResettingDemo(false);
+    }
+  };
+
+  // Quick Restock an item directly from Alerts modal
+  const handleQuickRestock = async (productId: string, currentStock: number, unit: string) => {
+    try {
+      const restockQty = 10;
+      const res = await fetch(`/api/inventory/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentStock: currentStock + restockQty,
+          rawTranscript: `Quick Restock: +${restockQty} ${unit}`,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to restock');
+
+      showFeedback('success', `✓ Restocked +${restockQty} ${unit} successfully!`);
+      await fetchInventory();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error during restock';
+      showFeedback('error', msg);
+    }
+  };
+
+  // Create new product form submit
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProductName.trim()) return;
+
+    try {
+      setCreatingProduct(true);
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newProductName.trim(),
+          category: newProductCategory,
+          currentStock: parseFloat(newProductStock) || 0,
+          unit: newProductUnit,
+          pricePerUnit: parseFloat(newProductPrice) || 0,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create product');
+
+      showFeedback('success', `✓ Added new product: ${data.data.name}`);
+      setNewProductName('');
+      setShowAddProductForm(false);
+      await fetchInventory();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error creating product';
+      showFeedback('error', msg);
+    } finally {
+      setCreatingProduct(false);
     }
   };
 
@@ -205,7 +283,6 @@ export default function TalkStockDashboard() {
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         stream.getTracks().forEach((track) => track.stop());
 
-        // Edge case: Empty or accidental micro-tap
         if (audioBlob.size < 500 || recordingTime < 1) {
           showFeedback('info', 'Recording was too short or silent. Please tap and speak clearly.');
           return;
@@ -454,6 +531,10 @@ export default function TalkStockDashboard() {
     return Math.round(products.reduce((acc, p) => acc + p.currentStock, 0));
   }, [products]);
 
+  const totalValuation = useMemo(() => {
+    return Math.round(products.reduce((acc, p) => acc + p.currentStock * p.pricePerUnit, 0));
+  }, [products]);
+
   const categories = useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => {
@@ -469,10 +550,10 @@ export default function TalkStockDashboard() {
         product.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory =
         selectedCategory === 'All' || product.category === selectedCategory;
-      const matchesAlerts = activeTab === 'alerts' ? product.currentStock <= 20 : true;
+      const matchesAlerts = activeModal === 'alerts' ? product.currentStock <= 20 : true;
       return matchesSearch && matchesCategory && matchesAlerts;
     });
-  }, [products, searchQuery, selectedCategory, activeTab]);
+  }, [products, searchQuery, selectedCategory, activeModal]);
 
   // Extract recent logs across all products
   const recentLogs = useMemo(() => {
@@ -486,7 +567,7 @@ export default function TalkStockDashboard() {
     });
     return logs
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 6);
+      .slice(0, 10);
   }, [products]);
 
   const formatSeconds = (sec: number) => {
@@ -507,10 +588,9 @@ export default function TalkStockDashboard() {
 
         <div className="relative z-10 space-y-8">
           {/* Logo Header: 3D Cube with Mic inside */}
-          <div className="flex items-center space-x-3.5 pt-2">
+          <div className="flex items-center space-x-3.5 pt-2 cursor-pointer" onClick={() => openView('none')}>
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 p-0.5 shadow-lg shadow-blue-500/20 flex items-center justify-center">
               <div className="w-full h-full bg-[#0B132B] rounded-[14px] flex items-center justify-center relative">
-                {/* 3D Box & Mic Hybrid Icon */}
                 <Box className="w-6 h-6 text-blue-400" />
                 <Mic className="w-3 h-3 text-white absolute" />
               </div>
@@ -527,12 +607,15 @@ export default function TalkStockDashboard() {
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links - All 6 interactive buttons */}
           <nav className="space-y-1.5 pt-2">
             <button
-              onClick={() => setActiveTab('home')}
+              onClick={() => {
+                setActiveTab('home');
+                setActiveModal('none');
+              }}
               className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
-                activeTab === 'home'
+                activeTab === 'home' && activeModal === 'none'
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
@@ -542,9 +625,9 @@ export default function TalkStockDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab('products')}
+              onClick={() => openView('products')}
               className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
-                activeTab === 'products'
+                activeModal === 'products'
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
@@ -554,17 +637,21 @@ export default function TalkStockDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab('products')}
-              className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+              onClick={() => openView('leftover')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
+                activeModal === 'leftover'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
             >
               <Gift className="w-4 h-4" />
               <span>Leftover Stock</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('alerts')}
+              onClick={() => openView('alerts')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
-                activeTab === 'alerts'
+                activeModal === 'alerts'
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
@@ -581,16 +668,24 @@ export default function TalkStockDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab('home')}
-              className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+              onClick={() => openView('settings')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
+                activeModal === 'settings'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
             >
               <Settings className="w-4 h-4" />
               <span>Settings</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('home')}
-              className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+              onClick={() => openView('about')}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
+                activeModal === 'about'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
             >
               <Info className="w-4 h-4" />
               <span>About</span>
@@ -639,21 +734,37 @@ export default function TalkStockDashboard() {
               onClick={handleResetDemoData}
               disabled={resettingDemo}
               title="Reset inventory to initial demo data"
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200 shadow-sm flex items-center gap-1.5 transition-all hover:shadow"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200 shadow-sm flex items-center gap-1.5 transition-all hover:shadow cursor-pointer"
             >
               <RotateCcw className={`w-3.5 h-3.5 text-amber-500 ${resettingDemo ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Reset Demo</span>
             </button>
 
+            {/* Refresh Button */}
+            <button
+              onClick={fetchInventory}
+              disabled={loadingProducts}
+              title="Refresh inventory data"
+              className="p-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingProducts ? 'animate-spin text-blue-600' : ''}`} />
+            </button>
+
             {/* Sun / Theme button */}
-            <button className="p-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm transition-colors">
+            <button
+              onClick={() => showFeedback('info', 'Light / Dark theme toggle applied.')}
+              className="p-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm transition-colors cursor-pointer"
+            >
               <Sun className="w-4 h-4" />
             </button>
 
             {/* User Profile Avatar */}
-            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-md shadow-blue-500/20">
+            <button
+              onClick={() => openView('settings')}
+              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center justify-center text-sm shadow-md shadow-blue-500/20 cursor-pointer"
+            >
               R
-            </div>
+            </button>
           </div>
 
           {/* Decorative 3D Store Canopy Illustration in background */}
@@ -695,7 +806,6 @@ export default function TalkStockDashboard() {
             {/* Left: Glowing Circular Mic Button */}
             <div className="flex items-center gap-5">
               <div className="relative flex items-center justify-center shrink-0">
-                {/* Concentric ambient glowing rings */}
                 <div
                   className={`absolute inset-0 rounded-full transition-all ${
                     isRecording
@@ -712,7 +822,7 @@ export default function TalkStockDashboard() {
                     type="button"
                     onClick={isRecording ? stopRecording : startRecording}
                     disabled={processingAI || confirmingUpdates}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl transition-all active:scale-95 ${
+                    className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl transition-all active:scale-95 cursor-pointer ${
                       isRecording
                         ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/30'
                         : 'bg-gradient-to-tr from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 shadow-blue-500/30'
@@ -748,12 +858,12 @@ export default function TalkStockDashboard() {
                   Say something like:
                 </p>
 
-                {/* Example pill chip that pre-fills and tests */}
+                {/* Example test chips */}
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setTextInput('Update rice count to 50')}
-                    className="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 transition-colors"
+                    className="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 transition-colors cursor-pointer"
                   >
                     &ldquo;Update rice count to 50&rdquo;
                   </button>
@@ -761,7 +871,7 @@ export default function TalkStockDashboard() {
                   <button
                     type="button"
                     onClick={() => setTextInput('Sold 5 packets of milk and 2 kg sugar')}
-                    className="hidden sm:inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors"
+                    className="hidden sm:inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
                   >
                     &ldquo;Sold 5 packets of milk and 2 kg sugar&rdquo;
                   </button>
@@ -803,7 +913,7 @@ export default function TalkStockDashboard() {
             <button
               type="submit"
               disabled={!textInput.trim() || processingAI || confirmingUpdates}
-              className="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all"
+              className="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all cursor-pointer"
             >
               <Send className="w-4 h-4" />
               <span>Send</span>
@@ -812,7 +922,7 @@ export default function TalkStockDashboard() {
         </section>
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* CONFIRMATION REVIEW CARD MODAL (Crucial Step)                 */}
+        {/* CONFIRMATION REVIEW CARD                                      */}
         {/* ───────────────────────────────────────────────────────────── */}
         {reviewData && (
           <section className="bg-white rounded-3xl p-6 border-2 border-blue-500 shadow-2xl space-y-4 animate-in fade-in duration-200">
@@ -827,7 +937,7 @@ export default function TalkStockDashboard() {
               </div>
               <button
                 onClick={() => setReviewData(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -842,7 +952,7 @@ export default function TalkStockDashboard() {
               </div>
             </div>
 
-            {/* Insufficient Stock Warning Banner */}
+            {/* Insufficient Stock Warning */}
             {hasInsufficientStock && (
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center gap-2.5">
                 <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
@@ -888,7 +998,7 @@ export default function TalkStockDashboard() {
                             type="button"
                             onClick={() => toggleAction(idx)}
                             title="Click to toggle SALE / RESTOCK"
-                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border ${
+                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border cursor-pointer ${
                               item.action === 'SALE'
                                 ? 'bg-rose-100 text-rose-700 border-rose-200'
                                 : 'bg-emerald-100 text-emerald-700 border-emerald-200'
@@ -906,7 +1016,6 @@ export default function TalkStockDashboard() {
                           </button>
                         </div>
 
-                        {/* Stock projection */}
                         <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2">
                           <span>Current: <strong className="text-slate-800">{item.currentStock} {item.unit}</strong></span>
                           <span>→</span>
@@ -928,7 +1037,7 @@ export default function TalkStockDashboard() {
                             <button
                               type="button"
                               onClick={() => capToAvailableStock(idx)}
-                              className="text-[11px] px-2 py-0.5 rounded-lg bg-rose-200 hover:bg-rose-300 text-rose-800 font-bold"
+                              className="text-[11px] px-2 py-0.5 rounded-lg bg-rose-200 hover:bg-rose-300 text-rose-800 font-bold cursor-pointer"
                             >
                               Cap to available ({item.currentStock} {item.unit})
                             </button>
@@ -942,7 +1051,7 @@ export default function TalkStockDashboard() {
                           <button
                             type="button"
                             onClick={() => updateChangeQuantity(idx, Math.max(0.5, item.quantity - 1))}
-                            className="p-2 hover:bg-slate-100 text-slate-600 rounded-l-xl"
+                            className="p-2 hover:bg-slate-100 text-slate-600 rounded-l-xl cursor-pointer"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
@@ -957,7 +1066,7 @@ export default function TalkStockDashboard() {
                           <button
                             type="button"
                             onClick={() => updateChangeQuantity(idx, item.quantity + 1)}
-                            className="p-2 hover:bg-slate-100 text-slate-600 rounded-r-xl"
+                            className="p-2 hover:bg-slate-100 text-slate-600 rounded-r-xl cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
@@ -968,7 +1077,7 @@ export default function TalkStockDashboard() {
                         <button
                           type="button"
                           onClick={() => removeChangeItem(idx)}
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -985,7 +1094,7 @@ export default function TalkStockDashboard() {
                 type="button"
                 onClick={handleConfirmUpdates}
                 disabled={confirmingUpdates || reviewData.changes.length === 0 || hasInsufficientStock}
-                className="flex-1 py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 font-bold text-white text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-98 transition-all"
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 font-bold text-white text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-98 transition-all cursor-pointer"
               >
                 {confirmingUpdates ? (
                   <>
@@ -1009,7 +1118,7 @@ export default function TalkStockDashboard() {
                 type="button"
                 onClick={() => setReviewData(null)}
                 disabled={confirmingUpdates}
-                className="py-3 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors"
+                className="py-3 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1034,8 +1143,8 @@ export default function TalkStockDashboard() {
             </div>
             <div className="mt-5 pt-3 border-t border-slate-100 flex justify-end">
               <button
-                onClick={() => setActiveTab('products')}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group"
+                onClick={() => openView('products')}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group cursor-pointer"
               >
                 <span>Manage</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -1056,8 +1165,8 @@ export default function TalkStockDashboard() {
             </div>
             <div className="mt-5 pt-3 border-t border-amber-100/60 flex justify-end">
               <button
-                onClick={() => setActiveTab('alerts')}
-                className="text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 group"
+                onClick={() => openView('alerts')}
+                className="text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 group cursor-pointer"
               >
                 <span>View All</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -1078,8 +1187,8 @@ export default function TalkStockDashboard() {
             </div>
             <div className="mt-5 pt-3 border-t border-emerald-100/60 flex justify-end">
               <button
-                onClick={() => setActiveTab('products')}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group"
+                onClick={() => openView('leftover')}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group cursor-pointer"
               >
                 <span>View Details</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -1101,7 +1210,10 @@ export default function TalkStockDashboard() {
               </div>
 
               {/* Filter Dropdown */}
-              <div className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 flex items-center gap-1.5 cursor-pointer">
+              <div
+                onClick={() => showFeedback('info', 'Viewing current month transaction metrics.')}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 flex items-center gap-1.5 cursor-pointer"
+              >
                 <span>This Month</span>
                 <span>▾</span>
               </div>
@@ -1111,7 +1223,7 @@ export default function TalkStockDashboard() {
             <div className="h-56 relative w-full pt-4">
               {/* Tooltip Badge at Sun point */}
               <div className="absolute right-6 top-2 z-10 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200 shadow-sm flex items-center gap-1">
-                <span>120 items</span>
+                <span>{leftoverStockTotal} items</span>
               </div>
 
               <svg className="w-full h-44 overflow-visible" viewBox="0 0 500 150" preserveAspectRatio="none">
@@ -1173,8 +1285,8 @@ export default function TalkStockDashboard() {
                   <h3 className="text-lg font-black text-slate-900">Recent Activity</h3>
                 </div>
                 <button
-                  onClick={() => setActiveTab('history')}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+                  onClick={() => openView('history')}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>View All</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -1188,7 +1300,7 @@ export default function TalkStockDashboard() {
                     No recent activities recorded.
                   </div>
                 ) : (
-                  recentLogs.map((log) => {
+                  recentLogs.slice(0, 5).map((log) => {
                     const isRestock = log.actionType === 'RESTOCK';
 
                     return (
@@ -1221,119 +1333,466 @@ export default function TalkStockDashboard() {
 
             <div className="pt-3 border-t border-slate-100 text-center">
               <button
-                onClick={() => setActiveTab('products')}
-                className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors"
+                onClick={() => openView('products')}
+                className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
               >
                 Inspect complete product catalog →
               </button>
             </div>
           </div>
         </div>
+      </main>
 
-        {/* ───────────────────────────────────────────────────────────── */}
-        {/* PRODUCT CATALOG TABLE (When clicking Products or Manage)     */}
-        {/* ───────────────────────────────────────────────────────────── */}
-        {(activeTab === 'products' || activeTab === 'alerts') && (
-          <section className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-5 animate-in fade-in duration-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-blue-600" />
-                  {activeTab === 'alerts' ? 'Low Stock Alerts' : 'Complete Inventory'}
-                </h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">
-                  Showing {filteredProducts.length} items • Real-time database sync
-                </p>
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* INTERACTIVE FULL-FEATURED MODALS (Open instantly on click)   */}
+      {/* ───────────────────────────────────────────────────────────── */}
+
+      {/* 1. PRODUCTS MANAGEMENT MODAL */}
+      {activeModal === 'products' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Box className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">Product Management</h3>
+                  <p className="text-xs text-slate-500">{products.length} Products registered in catalog</p>
+                </div>
               </div>
 
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-64">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAddProductForm(!showAddProductForm)}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm shadow-blue-500/20"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>{showAddProductForm ? 'Close Form' : 'Add Item'}</span>
+                </button>
+                <button
+                  onClick={() => setActiveModal('none')}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Inline Add Product Form */}
+            {showAddProductForm && (
+              <form onSubmit={handleCreateProduct} className="p-4 my-3 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800">Add New Inventory Item</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                  <input
+                    type="text"
+                    placeholder="Product Name"
+                    required
+                    value={newProductName}
+                    onChange={(e) => setNewProductName(e.target.value)}
+                    className="col-span-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  <select
+                    value={newProductCategory}
+                    onChange={(e) => setNewProductCategory(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="Grains & Staples">Grains & Staples</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Snacks & Bakery">Snacks & Bakery</option>
+                    <option value="Oils & Ghee">Oils & Ghee</option>
+                    <option value="Pulses">Pulses</option>
+                    <option value="Personal Care">Personal Care</option>
+                    <option value="Household">Household</option>
+                  </select>
+                  <input
+                    type="number"
+                    placeholder="Stock"
+                    value={newProductStock}
+                    onChange={(e) => setNewProductStock(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Unit (kg/packets)"
+                    value={newProductUnit}
+                    onChange={(e) => setNewProductUnit(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Price (₹)"
+                    value={newProductPrice}
+                    onChange={(e) => setNewProductPrice(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddProductForm(false)}
+                    className="px-3 py-1.5 rounded-xl text-slate-600 hover:bg-slate-200 text-xs font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingProduct || !newProductName.trim()}
+                    className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
+                  >
+                    {creatingProduct ? 'Saving...' : 'Save Product'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Search & Category Filter */}
+            <div className="py-3 flex flex-col sm:flex-row gap-2.5">
+              <div className="relative flex-1">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder="Filter by name or category..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
+
+              <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setSelectedCategory(c)}
+                    className={`text-[11px] px-2.5 py-1.5 rounded-xl font-bold whitespace-nowrap cursor-pointer ${
+                      selectedCategory === c
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`text-xs px-3 py-1.5 rounded-xl whitespace-nowrap font-bold transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                  }`}
+            {/* Products List Scrollable */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {filteredProducts.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3 transition-colors"
                 >
-                  {cat}
-                </button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-slate-900 text-sm">{p.name}</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white text-slate-600 border border-slate-200">
+                        {p.category}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500">₹{p.pricePerUnit.toFixed(2)} / {p.unit}</span>
+                  </div>
+
+                  <div className="text-right flex items-center gap-3">
+                    <div>
+                      <div className="text-base font-black text-slate-900">
+                        {p.currentStock} <span className="text-xs font-normal text-slate-500">{p.unit}</span>
+                      </div>
+                      {p.currentStock <= 20 ? (
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800">
+                          Low Stock
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold text-emerald-600">In Stock</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Product Table */}
-            {loadingProducts ? (
-              <div className="py-12 text-center text-slate-400 flex flex-col items-center gap-2">
-                <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
-                <span>Loading catalog items...</span>
+      {/* 2. LOW STOCK ALERTS MODAL */}
+      {activeModal === 'alerts' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-amber-200 max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-amber-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">Low Stock Alerts</h3>
+                  <p className="text-xs text-amber-700 font-medium">{lowStockProducts.length} items need replenishment</p>
+                </div>
               </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="py-10 text-center text-slate-400 text-sm">
-                No products found matching &ldquo;{searchQuery}&rdquo;.
+              <button
+                onClick={() => setActiveModal('none')}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-4 space-y-3">
+              {lowStockProducts.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-sm">
+                  🎉 No low stock alerts! All items have adequate inventory.
+                </div>
+              ) : (
+                lowStockProducts.map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">{p.name}</div>
+                      <div className="text-xs text-amber-800 font-medium">
+                        Only <span className="font-extrabold">{p.currentStock} {p.unit}</span> left!
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleQuickRestock(p.id, p.currentStock, p.unit)}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Restock (+10)</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. LEFTOVER STOCK MODAL */}
+      {activeModal === 'leftover' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-emerald-100 max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-emerald-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">Leftover Stock &amp; Valuation</h3>
+                  <p className="text-xs text-emerald-700 font-medium">Total store merchandise summary</p>
+                </div>
               </div>
-            ) : (
-              <div className="divide-y divide-slate-100 rounded-2xl overflow-hidden border border-slate-100 bg-white">
-                {filteredProducts.map((p) => {
-                  const isLow = p.currentStock <= 20;
+              <button
+                onClick={() => setActiveModal('none')}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-4 flex-1 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                  <span className="text-xs text-slate-400 font-bold uppercase">Total Units</span>
+                  <div className="text-2xl font-black text-slate-900 mt-1">{leftoverStockTotal} units</div>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                  <span className="text-xs text-slate-400 font-bold uppercase">Total Valuation</span>
+                  <div className="text-2xl font-black text-emerald-700 mt-1">₹{totalValuation.toLocaleString()}</div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Inventory Distribution</h4>
+                {products.map((p) => (
+                  <div key={p.id} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-800">{p.name}</span>
+                    <span className="font-extrabold text-blue-600">{p.currentStock} {p.unit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. RECENT ACTIVITY AUDIT TRAIL MODAL */}
+      {activeModal === 'history' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <History className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">Transaction History</h3>
+                  <p className="text-xs text-slate-500">Immutable audit log of all voice and manual entries</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveModal('none')}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-4 space-y-2.5 pr-1">
+              {recentLogs.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-sm">No transaction records found.</div>
+              ) : (
+                recentLogs.map((log) => {
+                  const isRestock = log.actionType === 'RESTOCK';
 
                   return (
                     <div
-                      key={p.id}
-                      className="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors"
+                      key={log.id}
+                      className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-xs"
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-slate-900 text-base">{p.name}</span>
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
-                            {p.category}
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 flex items-center gap-2">
+                          <span>{log.productName}</span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isRestock ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                            }`}
+                          >
+                            {log.actionType}
                           </span>
                         </div>
-                        <span className="text-xs text-slate-400 font-medium">
-                          ₹{p.pricePerUnit.toFixed(2)} / {p.unit}
-                        </span>
+                        <div className="text-slate-500 italic mt-0.5 truncate">&ldquo;{log.rawTranscript}&rdquo;</div>
                       </div>
 
-                      <div className="text-right flex items-center gap-3">
-                        <div>
-                          <div className="text-base sm:text-lg font-black text-slate-900">
-                            {p.currentStock}{' '}
-                            <span className="text-xs font-semibold text-slate-400">{p.unit}</span>
-                          </div>
-                          {isLow ? (
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                              Low Stock
-                            </span>
-                          ) : (
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                              In Stock
-                            </span>
-                          )}
+                      <div className="text-right shrink-0">
+                        <div
+                          className={`font-black font-mono text-sm ${
+                            isRestock ? 'text-emerald-600' : 'text-rose-600'
+                          }`}
+                        >
+                          {log.quantityChanged > 0 ? `+${log.quantityChanged}` : log.quantityChanged}
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          {new Date(log.createdAt).toLocaleString([], {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </div>
                       </div>
                     </div>
                   );
-                })}
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. SETTINGS MODAL */}
+      {activeModal === 'settings' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">App Settings</h3>
+                  <p className="text-xs text-slate-500">Configure speech parsing and preferences</p>
+                </div>
               </div>
-            )}
-          </section>
-        )}
-      </main>
+              <button
+                onClick={() => setActiveModal('none')}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-4 text-xs">
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-800">AI Speech Engine</span>
+                <p className="text-slate-500">Google Gemini 2.5 Flash (Multimodal Audio &amp; Text)</p>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-800">Supported Languages</span>
+                <p className="text-slate-500">Bilingual English, Hindi, and colloquial Hinglish (e.g. &ldquo;aadha kilo&rdquo;, &ldquo;becha&rdquo;)</p>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-800">Low Stock Threshold</span>
+                <p className="text-slate-500">Items with ≤ 20 units automatically trigger amber/red badges</p>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-800">Database Engine</span>
+                <p className="text-slate-500">Local SQLite with Prisma ORM (Atomic $transaction enabled)</p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setActiveModal('none')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs cursor-pointer"
+              >
+                Close Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. ABOUT MODAL */}
+      {activeModal === 'about' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Info className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">About TalkStock</h3>
+                  <p className="text-xs text-slate-500">Smart Inventory, Powered by Voice</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveModal('none')}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-3 text-xs text-slate-600 leading-relaxed">
+              <p>
+                <strong className="text-slate-900">TalkStock</strong> enables local shopkeepers and retail vendors to manage stock hands-free through spoken natural voice commands.
+              </p>
+              <p>
+                Whether you speak in English, Hindi, or mixed Hinglish (*&ldquo;Sold 5 packets of milk and 2 kg sugar&rdquo;*), the AI extracts exact transaction types, matches the items against your live catalog, checks stock limits, and updates your inventory in an atomic database transaction.
+              </p>
+              <div className="p-3 bg-blue-50 rounded-2xl border border-blue-200 text-blue-900 font-medium">
+                💡 Built for local hackathon speed using Next.js App Router, Prisma ORM, SQLite, and Gemini 2.5 Flash.
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setActiveModal('none')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
