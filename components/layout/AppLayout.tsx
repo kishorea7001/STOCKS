@@ -49,7 +49,7 @@ export function AppLayout({
             />
 
             {/* Drawer */}
-            <div className="relative flex w-72 max-w-[85%] flex-col bg-white shadow-2xl z-10">
+            <div className="relative flex w-[220px] flex-col bg-white shadow-2xl z-10">
               <div className="absolute top-4 right-4 z-20">
                 <button
                   type="button"
