@@ -6,6 +6,7 @@ export interface CardProps {
   subtitle?: string;
   icon?: React.ReactNode;
   action?: React.ReactNode;
+  borderHeader?: boolean;
   className?: string;
   bodyClassName?: string;
   hoverEffect?: boolean;
@@ -17,6 +18,7 @@ export function Card({
   subtitle,
   icon,
   action,
+  borderHeader = false,
   className = '',
   bodyClassName = '',
   hoverEffect = false,
@@ -28,16 +30,20 @@ export function Card({
       } ${className}`}
     >
       {(title || icon || action) && (
-        <div className="flex items-center justify-between border-b border-slate-100/70 px-6 py-4 md:px-7 md:py-5">
-          <div className="flex items-center gap-3">
+        <div
+          className={`flex items-center justify-between px-6 pt-6 pb-2 md:px-7 md:pt-7 md:pb-3 ${
+            borderHeader ? 'border-b border-slate-100/70 pb-4 md:pb-5' : ''
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
             {icon && (
-              <div className="flex items-center justify-center text-slate-700">
+              <div className="flex items-center justify-center shrink-0">
                 {icon}
               </div>
             )}
             <div>
               {title && (
-                <h3 className="text-base md:text-lg font-semibold text-slate-800 tracking-tight">
+                <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
                   {title}
                 </h3>
               )}
@@ -51,7 +57,9 @@ export function Card({
           {action && <div className="shrink-0">{action}</div>}
         </div>
       )}
-      <div className={`p-6 md:p-7 ${bodyClassName}`}>{children}</div>
+      <div className={`p-6 md:p-7 ${title || icon || action ? 'pt-3 md:pt-4' : ''} ${bodyClassName}`}>
+        {children}
+      </div>
     </div>
   );
 }

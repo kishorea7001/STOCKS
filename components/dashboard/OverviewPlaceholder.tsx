@@ -25,7 +25,7 @@ export function OverviewPlaceholder() {
       {/* 1. Statistics Cards Row (Equal Height, Perfectly Aligned) */}
       <section aria-label="Key Statistics">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-stretch">
-          {/* Card 1: Total Products (Light blue gradient, blue-tinted border, blue cube icon, 10) */}
+          {/* Card 1: Total Products */}
           <StatCard
             title="Total Products"
             number="10"
@@ -33,7 +33,7 @@ export function OverviewPlaceholder() {
             icon={<Box className="h-6 w-6 text-blue-600" />}
           />
 
-          {/* Card 2: Low Stock Alerts (Light green gradient, green-tinted border, green warning icon, 2) */}
+          {/* Card 2: Low Stock Alerts */}
           <StatCard
             title="Low Stock Alerts"
             number="2"
@@ -41,7 +41,7 @@ export function OverviewPlaceholder() {
             icon={<AlertTriangle className="h-6 w-6 text-emerald-600" />}
           />
 
-          {/* Card 3: 401 / View Details → (Light purple gradient, purple-tinted border, purple package icon) */}
+          {/* Card 3: 401 / View Details → */}
           <StatCard
             number="401"
             linkText="View Details →"
@@ -55,7 +55,7 @@ export function OverviewPlaceholder() {
       <section aria-label="Quick Actions">
         <Card
           title="Quick Actions"
-          icon={<Zap className="h-5 w-5 text-amber-500 fill-amber-500" />}
+          icon={<Zap className="h-5 w-5 text-amber-500 fill-amber-400" />}
           action={
             <button
               type="button"
@@ -66,26 +66,33 @@ export function OverviewPlaceholder() {
             </button>
           }
         >
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+            {/* Button 1: Reset Demo (Light blue bg, blue icon/text) */}
             <QuickActionTile
               label="Reset Demo"
               variant="blue"
-              icon={<RotateCcw className="h-5 w-5 text-blue-600" />}
+              icon={<RotateCcw className="h-8 w-8 stroke-[2.2]" />}
             />
+
+            {/* Button 2: Refresh (Light green bg, green icon/text) */}
             <QuickActionTile
               label="Refresh"
               variant="green"
-              icon={<RefreshCw className="h-5 w-5 text-emerald-600" />}
+              icon={<RefreshCw className="h-8 w-8 stroke-[2.2]" />}
             />
+
+            {/* Button 3: Settings (Light purple bg, purple icon/text) */}
             <QuickActionTile
               label="Settings"
               variant="purple"
-              icon={<Settings className="h-5 w-5 text-purple-600" />}
+              icon={<Settings className="h-8 w-8 stroke-[2.2]" />}
             />
+
+            {/* Button 4: Voice Command (Light blue bg, blue icon/text) */}
             <QuickActionTile
               label="Voice Command"
               variant="blue"
-              icon={<Mic className="h-5 w-5 text-blue-600" />}
+              icon={<Mic className="h-8 w-8 stroke-[2.2]" />}
             />
           </div>
         </Card>
