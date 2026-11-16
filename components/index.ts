@@ -10,3 +10,4 @@ export * from './layout/AppHeader';
 export * from './layout/AppLayout';
 export * from './dashboard/OverviewPlaceholder';
 export * from './dashboard/VoiceInteractionCard';
+export * from './dashboard/DashboardOverviewCard';

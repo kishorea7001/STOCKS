@@ -11,14 +11,12 @@ import {
   Settings,
   Mic,
   ArrowRight,
-  TrendingUp,
-  Clock,
-  LayoutGrid,
 } from 'lucide-react';
 import { StatCard } from '../ui/StatCard';
 import { Card } from '../ui/Card';
 import { QuickActionTile } from '../ui/QuickActionTile';
 import { VoiceInteractionCard } from './VoiceInteractionCard';
+import { DashboardOverviewCard } from './DashboardOverviewCard';
 
 export function OverviewPlaceholder() {
   return (
@@ -102,57 +100,8 @@ export function OverviewPlaceholder() {
       {/* 3. Large Prominent Voice Interaction Card */}
       <VoiceInteractionCard />
 
-      {/* 4. Modular Dashboard Content Slots (Placeholder Framework) */}
-      <section aria-label="Dashboard Framework">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Visual Slot */}
-          <div className="lg:col-span-2">
-            <Card
-              title="Dashboard Overview"
-              subtitle="Performance and inventory movement trends"
-              icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
-              action={
-                <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">
-                  This Month
-                </span>
-              }
-            >
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100/70 text-blue-600 mb-3">
-                  <LayoutGrid className="h-6 w-6" />
-                </div>
-                <h4 className="text-sm font-semibold text-slate-800">
-                  Dashboard Analytics Area
-                </h4>
-                <p className="text-xs text-slate-500 max-w-sm mt-1">
-                  Ready for interactive charts, stock level timelines, and automated business insights.
-                </p>
-              </div>
-            </Card>
-          </div>
-
-          {/* Activity Slot */}
-          <div className="lg:col-span-1">
-            <Card
-              title="Recent Activity"
-              subtitle="Latest voice updates"
-              icon={<Clock className="h-5 w-5 text-purple-600" />}
-            >
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100/70 text-purple-600 mb-3">
-                  <Clock className="h-6 w-6" />
-                </div>
-                <h4 className="text-sm font-semibold text-slate-800">
-                  Activity Feed Area
-                </h4>
-                <p className="text-xs text-slate-500 max-w-xs mt-1">
-                  Ready for live transaction logs, audit history, and low-stock notification feeds.
-                </p>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
+      {/* 4. Dashboard Overview Smooth Line Chart Card */}
+      <DashboardOverviewCard />
     </div>
   );
 }
