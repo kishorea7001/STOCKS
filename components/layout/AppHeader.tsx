@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Menu, Sparkles } from 'lucide-react';
-import { Badge } from '../ui/Badge';
+import { Menu } from 'lucide-react';
 
 export interface AppHeaderProps {
   title?: string;
@@ -19,7 +18,7 @@ export function AppHeader({
 }: AppHeaderProps) {
   return (
     <header
-      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 md:pb-8 ${className}`}
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 md:mb-10 ${className}`}
     >
       <div className="flex items-start gap-3">
         {onToggleMobileMenu && (
@@ -34,28 +33,26 @@ export function AppHeader({
         )}
 
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-              {title}
-            </h2>
-            <Sparkles className="h-5 w-5 text-amber-400 hidden sm:inline-block animate-pulse" />
-          </div>
-          <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">
+          <h2 className="text-3xl md:text-[32px] lg:text-[34px] font-bold text-[#0F172A] tracking-tight leading-tight">
+            {title}
+          </h2>
+          <p className="text-sm md:text-[15px] text-slate-500 font-normal mt-1.5">
             {subtitle}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 self-start sm:self-center">
-        <Badge
-          variant="success"
-          size="md"
-          dot
-          pulse
-          className="shadow-xs bg-white/90 border-emerald-200 text-emerald-700 font-semibold"
-        >
-          Online
-        </Badge>
+      {/* Upper-right Status Pill: Rounded pill shape, green circular indicator, Online text, white/light-green background */}
+      <div className="flex items-center gap-2 self-start sm:self-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/70 bg-white/90 px-3.5 py-1.5 shadow-xs transition-colors hover:bg-emerald-50/40">
+          <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          </span>
+          <span className="text-xs md:text-sm font-semibold tracking-tight text-slate-800">
+            Online
+          </span>
+        </div>
       </div>
     </header>
   );
