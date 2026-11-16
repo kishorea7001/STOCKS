@@ -31,6 +31,8 @@ export interface NavItem {
 export interface SidebarProps {
   activeItem?: NavItemKey;
   onSelectItem?: (key: NavItemKey) => void;
+  alertsCount?: number;
+  isListening?: boolean;
   className?: string;
 }
 
@@ -117,6 +119,8 @@ function BlueCubeLogo({ className = 'h-11 w-11' }: { className?: string }) {
 export function Sidebar({
   activeItem = 'home',
   onSelectItem,
+  alertsCount,
+  isListening = false,
   className = '',
 }: SidebarProps) {
   const navItems: NavItem[] = [
@@ -139,7 +143,7 @@ export function Sidebar({
       key: 'alerts',
       label: 'Alerts',
       icon: <Bell className="h-[18px] w-[18px]" />,
-      badge: 2,
+      badge: typeof alertsCount === 'number' ? alertsCount : 2,
     },
     {
       key: 'settings',
@@ -206,7 +210,7 @@ export function Sidebar({
                   </span>
                 </div>
 
-                {item.badge !== undefined && (
+                {item.badge !== undefined && Number(item.badge) > 0 && (
                   <span
                     className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold shadow-xs ${
                       isActive
@@ -226,17 +230,25 @@ export function Sidebar({
       {/* Bottom Area: Voice Status Card & Theme Selector */}
       <div className="p-3.5 space-y-2.5 border-t border-slate-100 bg-white">
         {/* Voice Status Card */}
-        <div className="rounded-2xl border border-blue-100/80 bg-gradient-to-b from-blue-50/50 via-white to-blue-50/30 p-3.5 shadow-xs flex flex-col items-center text-center">
+        <div className={`rounded-2xl border p-3.5 shadow-xs flex flex-col items-center text-center transition-colors ${
+          isListening
+            ? 'border-blue-300 bg-gradient-to-b from-blue-100/70 via-white to-blue-50'
+            : 'border-blue-100/80 bg-gradient-to-b from-blue-50/50 via-white to-blue-50/30'
+        }`}>
           {/* Microphone Icon in subtle soft blue badge */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 mb-1.5 shadow-xs border border-blue-100/60">
+          <div className={`flex h-10 w-10 items-center justify-center rounded-full mb-1.5 shadow-xs border transition-all ${
+            isListening
+              ? 'bg-blue-600 text-white border-blue-600 scale-105 animate-pulse'
+              : 'bg-blue-50 text-blue-600 border-blue-100/60'
+          }`}>
             <Mic className="h-5 w-5" />
           </div>
 
           <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-            Voice Ready
+            {isListening ? 'Listening...' : 'Voice Ready'}
           </h3>
           <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-            Say something...
+            {isListening ? 'Speak now...' : 'Say something...'}
           </p>
 
           {/* Small Blue Audio Waveform Underneath */}
@@ -244,13 +256,13 @@ export function Sidebar({
             className="mt-2.5 flex items-center justify-center gap-1 h-5 px-2"
             aria-hidden="true"
           >
-            <span className="w-1 h-2 rounded-full bg-blue-400 animate-pulse [animation-delay:0ms]" />
-            <span className="w-1 h-3.5 rounded-full bg-blue-500 animate-pulse [animation-delay:150ms]" />
-            <span className="w-1 h-5 rounded-full bg-blue-600 animate-pulse [animation-delay:300ms]" />
-            <span className="w-1 h-3 rounded-full bg-blue-500 animate-pulse [animation-delay:180ms]" />
-            <span className="w-1 h-4.5 rounded-full bg-blue-600 animate-pulse [animation-delay:420ms]" />
-            <span className="w-1 h-2.5 rounded-full bg-blue-400 animate-pulse [animation-delay:90ms]" />
-            <span className="w-1 h-4 rounded-full bg-blue-500 animate-pulse [animation-delay:260ms]" />
+            <span className={`w-1 rounded-full bg-blue-400 animate-pulse [animation-delay:0ms] ${isListening ? 'h-3.5 bg-blue-600' : 'h-2'}`} />
+            <span className={`w-1 rounded-full bg-blue-500 animate-pulse [animation-delay:150ms] ${isListening ? 'h-5 bg-blue-600' : 'h-3.5'}`} />
+            <span className={`w-1 rounded-full bg-blue-600 animate-pulse [animation-delay:300ms] ${isListening ? 'h-6 bg-blue-700' : 'h-5'}`} />
+            <span className={`w-1 rounded-full bg-blue-500 animate-pulse [animation-delay:180ms] ${isListening ? 'h-5 bg-blue-600' : 'h-3'}`} />
+            <span className={`w-1 rounded-full bg-blue-600 animate-pulse [animation-delay:420ms] ${isListening ? 'h-6 bg-blue-700' : 'h-4.5'}`} />
+            <span className={`w-1 rounded-full bg-blue-400 animate-pulse [animation-delay:90ms] ${isListening ? 'h-4 bg-blue-600' : 'h-2.5'}`} />
+            <span className={`w-1 rounded-full bg-blue-500 animate-pulse [animation-delay:260ms] ${isListening ? 'h-5 bg-blue-600' : 'h-4'}`} />
           </div>
         </div>
 

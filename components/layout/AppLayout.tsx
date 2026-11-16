@@ -9,6 +9,8 @@ export interface AppLayoutProps {
   children: React.ReactNode;
   activeItem?: NavItemKey;
   onSelectItem?: (key: NavItemKey) => void;
+  alertsCount?: number;
+  isListening?: boolean;
   className?: string;
 }
 
@@ -16,6 +18,8 @@ export function AppLayout({
   children,
   activeItem = 'home',
   onSelectItem,
+  alertsCount,
+  isListening = false,
   className = '',
 }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -58,7 +62,12 @@ export function AppLayout({
       <div className="flex-1 flex overflow-hidden bg-slate-50 relative">
         {/* Desktop Fixed Left Sidebar (w-[220px]) */}
         <div className="hidden md:flex shrink-0 h-full">
-          <Sidebar activeItem={activeItem} onSelectItem={handleSelectItem} />
+          <Sidebar
+            activeItem={activeItem}
+            onSelectItem={handleSelectItem}
+            alertsCount={alertsCount}
+            isListening={isListening}
+          />
         </div>
 
         {/* Mobile Navigation Drawer & Backdrop */}
@@ -82,7 +91,12 @@ export function AppLayout({
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <Sidebar activeItem={activeItem} onSelectItem={handleSelectItem} />
+              <Sidebar
+                activeItem={activeItem}
+                onSelectItem={handleSelectItem}
+                alertsCount={alertsCount}
+                isListening={isListening}
+              />
             </div>
           </div>
         )}

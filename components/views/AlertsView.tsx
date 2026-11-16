@@ -10,17 +10,19 @@ import { ProductItem } from './ProductsView';
 export interface AlertsViewProps {
   products: ProductItem[];
   onRestockItem?: (productId: string, amount: number) => void;
+  onRestockAll?: () => void;
   className?: string;
 }
 
 export function AlertsView({
   products = [],
   onRestockItem,
+  onRestockAll,
   className = '',
 }: AlertsViewProps) {
   const safeProducts = Array.isArray(products) ? products : [];
-  // Items with low stock (e.g. <= 25 units)
-  const lowStockItems = safeProducts.filter((p) => p.currentStock <= 25);
+  // Items with low stock (threshold of <= 20 units)
+  const lowStockItems = safeProducts.filter((p) => p.currentStock <= 20);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -32,17 +34,41 @@ export function AlertsView({
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-900">
-              {lowStockItems.length} Products Need Replenishment
+              {lowStockItems.length === 0
+                ? 'All Stock Levels Normal'
+                : `${lowStockItems.length} Products Need Replenishment`}
             </h3>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5">
-              Items at or below minimum threshold of 25 units.
+              {lowStockItems.length === 0
+                ? 'All products are above the minimum threshold of 20 units. Sidebar alert badge cleared.'
+                : 'Items at or below minimum threshold of 20 units.'}
             </p>
           </div>
         </div>
 
-        <Badge variant="danger" size="md" dot pulse>
-          Action Required
-        </Badge>
+        <div className="flex items-center gap-3">
+          {lowStockItems.length > 0 && onRestockAll && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onRestockAll}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              className="shadow-sm shadow-blue-500/20"
+            >
+              Restock All ({lowStockItems.length})
+            </Button>
+          )}
+
+          {lowStockItems.length > 0 ? (
+            <Badge variant="danger" size="md" dot pulse>
+              Action Required
+            </Badge>
+          ) : (
+            <Badge variant="success" size="md">
+              Healthy
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Alert Items List */}

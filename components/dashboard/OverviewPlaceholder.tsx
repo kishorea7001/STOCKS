@@ -28,8 +28,12 @@ export interface OverviewPlaceholderProps {
   onVoiceCommand?: () => void;
   onViewDetails?: () => void;
   isListening?: boolean;
+  liveTranscript?: string;
+  speechFeedback?: string | null;
+  speechError?: string | null;
   onMicClick?: () => void;
   onSelectExample?: (cmd: string) => void;
+  onManualSubmit?: (cmd: string) => void;
   loadingReset?: boolean;
   loadingRefresh?: boolean;
 }
@@ -44,8 +48,12 @@ export function OverviewPlaceholder({
   onVoiceCommand,
   onViewDetails,
   isListening = false,
+  liveTranscript = '',
+  speechFeedback = null,
+  speechError = null,
   onMicClick,
   onSelectExample,
+  onManualSubmit,
   loadingReset = false,
   loadingRefresh = false,
 }: OverviewPlaceholderProps) {
@@ -156,8 +164,12 @@ export function OverviewPlaceholder({
       {/* 3. Large Prominent Voice Interaction Card */}
       <VoiceInteractionCard
         isListening={isListening}
+        liveTranscript={liveTranscript}
+        speechFeedback={speechFeedback}
+        speechError={speechError}
         onMicClick={onMicClick}
         onSelectExample={onSelectExample}
+        onManualSubmit={onManualSubmit}
       />
 
       {/* 4. Dashboard Overview Smooth Line Chart Card */}

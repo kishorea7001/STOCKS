@@ -1,21 +1,38 @@
 'use client';
 
-import React from 'react';
-import { Mic, MessageSquare, Volume2, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mic, MessageSquare, Volume2, Sparkles, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 
 export interface VoiceInteractionCardProps {
   isListening?: boolean;
+  liveTranscript?: string;
+  speechFeedback?: string | null;
+  speechError?: string | null;
   onMicClick?: () => void;
   onSelectExample?: (command: string) => void;
+  onManualSubmit?: (command: string) => void;
   className?: string;
 }
 
 export function VoiceInteractionCard({
   isListening = false,
+  liveTranscript = '',
+  speechFeedback = null,
+  speechError = null,
   onMicClick,
   onSelectExample,
+  onManualSubmit,
   className = '',
 }: VoiceInteractionCardProps) {
+  const [typedInput, setTypedInput] = useState('');
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!typedInput.trim()) return;
+    onManualSubmit?.(typedInput.trim());
+    setTypedInput('');
+  };
+
   return (
     <section aria-label="Voice Command Interaction" className={className}>
       <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-sky-50/60 to-blue-100/50 p-6 md:p-8 lg:p-9 shadow-[0_4px_24px_rgba(37,99,235,0.05)] transition-all duration-300">
@@ -80,54 +97,69 @@ export function VoiceInteractionCard({
             <div>
               <div className="flex items-center justify-center md:justify-start gap-2.5">
                 <h3 className="text-2xl md:text-3xl font-extrabold text-[#0F172A] tracking-tight leading-tight">
-                  {isListening ? 'Listening...' : 'Tap to Speak'}
+                  {isListening ? 'Listening to Microphone...' : 'Tap to Speak'}
                 </h3>
                 {isListening && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 text-white text-xs font-semibold px-2.5 py-0.5 shadow-xs animate-pulse">
-                    <Volume2 className="h-3.5 w-3.5" />
-                    Audio Active
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 text-white text-xs font-semibold px-2.5 py-0.5 shadow-xs animate-pulse">
+                    <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+                    Recording
                   </span>
                 )}
               </div>
               <p className="text-sm md:text-[15px] text-slate-500 font-medium mt-1">
                 {isListening
-                  ? 'Speak your inventory update or click an example below to test:'
+                  ? 'Speak clearly into your microphone now:'
                   : 'Say something like:'}
               </p>
             </div>
 
             {/* White/Light Translucent Rounded Container with Example Commands */}
-            <div className="rounded-2xl border border-white/90 bg-white/85 backdrop-blur-xs p-4 md:p-4.5 shadow-xs transition-all">
+            <div className="rounded-2xl border border-white/90 bg-white/85 backdrop-blur-xs p-4 md:p-4.5 shadow-xs transition-all space-y-3">
               {isListening ? (
-                /* Dynamic Waveform Visualizer during Active Listening */
+                /* Dynamic Live Speech Feedback during Active Listening */
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-blue-600 flex items-center gap-1.5">
                       <Sparkles className="h-3.5 w-3.5 animate-spin" />
-                      Listening for voice input...
+                      Live Speech Recognition Active
                     </span>
                     <button
                       type="button"
                       onClick={onMicClick}
-                      className="text-xs font-semibold text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                      className="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
                     >
-                      Cancel
+                      Stop Listening
                     </button>
                   </div>
 
+                  {/* Real-time Spoken Transcript Box */}
+                  <div className="p-3.5 rounded-xl bg-blue-50/90 border border-blue-200/90 text-left">
+                    <div className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <Volume2 className="h-3.5 w-3.5 text-blue-500" />
+                      <span>Live Speech Transcript:</span>
+                    </div>
+                    <p className="text-sm md:text-base font-bold text-slate-900 min-h-[24px]">
+                      {liveTranscript ? `“${liveTranscript}”` : (
+                        <span className="text-slate-400 italic font-normal">
+                          Listening... speak now (e.g. &ldquo;Update rice count to 50&rdquo; or &ldquo;Sold 5 packets of milk&rdquo;)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
                   {/* Equalizer animation */}
-                  <div className="flex items-center justify-center gap-1.5 h-8 py-1">
+                  <div className="flex items-center justify-center gap-1.5 h-6 py-1">
                     {[
-                      'h-3 bg-blue-400',
-                      'h-6 bg-blue-500',
-                      'h-8 bg-blue-600',
+                      'h-2.5 bg-blue-400',
                       'h-5 bg-blue-500',
-                      'h-7 bg-blue-600',
-                      'h-4 bg-blue-400',
-                      'h-7 bg-blue-500',
-                      'h-8 bg-blue-600',
+                      'h-6 bg-blue-600',
+                      'h-4 bg-blue-500',
+                      'h-6 bg-blue-600',
+                      'h-3.5 bg-blue-400',
                       'h-5 bg-blue-500',
-                      'h-3 bg-blue-400',
+                      'h-6 bg-blue-600',
+                      'h-4 bg-blue-500',
+                      'h-2.5 bg-blue-400',
                     ].map((cls, i) => (
                       <span
                         key={i}
@@ -138,9 +170,9 @@ export function VoiceInteractionCard({
                   </div>
 
                   {/* Quick test clickable prompts */}
-                  <div className="pt-1 flex flex-wrap items-center gap-2 border-t border-slate-100/80">
+                  <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-slate-100">
                     <span className="text-[11px] font-medium text-slate-400">
-                      Or test sample command:
+                      Or click to simulate speech:
                     </span>
                     <button
                       type="button"
@@ -160,39 +192,78 @@ export function VoiceInteractionCard({
                 </div>
               ) : (
                 /* Ready State with Example Commands */
-                <div className="flex items-start gap-3">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0 mt-0.5">
-                    <MessageSquare className="h-4 w-4 stroke-[2.2]" />
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                      <MessageSquare className="h-4 w-4 stroke-[2.2]" />
+                    </div>
+
+                    <div className="flex-1 text-left space-y-1 text-xs md:text-[13.5px] font-semibold text-slate-700 leading-relaxed">
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                        <button
+                          type="button"
+                          onClick={() => onSelectExample?.('Update rice count to 50')}
+                          className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
+                        >
+                          &ldquo;Update rice count to 50&rdquo;
+                        </button>
+                        <span className="text-slate-300 font-normal hidden sm:inline">|</span>
+                        <button
+                          type="button"
+                          onClick={() => onSelectExample?.('Sold 5 packets of milk')}
+                          className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
+                        >
+                          &ldquo;Sold 5 packets of milk&rdquo;
+                        </button>
+                      </div>
+                      <div className="text-slate-600">
+                        <button
+                          type="button"
+                          onClick={() => onSelectExample?.('2 kg sugar left')}
+                          className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
+                        >
+                          &ldquo;2 kg sugar left&rdquo;
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex-1 text-left space-y-1 text-xs md:text-[13.5px] font-semibold text-slate-700 leading-relaxed">
-                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                      <button
-                        type="button"
-                        onClick={() => onSelectExample?.('Update rice count to 50')}
-                        className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
-                      >
-                        &ldquo;Update rice count to 50&rdquo;
-                      </button>
-                      <span className="text-slate-300 font-normal hidden sm:inline">|</span>
-                      <button
-                        type="button"
-                        onClick={() => onSelectExample?.('Sold 5 packets of milk')}
-                        className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
-                      >
-                        &ldquo;Sold 5 packets of milk&rdquo;
-                      </button>
-                    </div>
-                    <div className="text-slate-600">
-                      <button
-                        type="button"
-                        onClick={() => onSelectExample?.('2 kg sugar left')}
-                        className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
-                      >
-                        &ldquo;2 kg sugar left&rdquo;
-                      </button>
-                    </div>
-                  </div>
+                  {/* Fallback Command Input */}
+                  <form
+                    onSubmit={handleFormSubmit}
+                    className="flex items-center gap-2 pt-2 border-t border-slate-100"
+                  >
+                    <input
+                      type="text"
+                      value={typedInput}
+                      onChange={(e) => setTypedInput(e.target.value)}
+                      placeholder='Type a command e.g. "Sold 5 milk" or "Update rice to 50"'
+                      className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50/60 focus:bg-white focus:outline-none focus:border-blue-500 text-slate-800 placeholder:text-slate-400"
+                    />
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition"
+                    >
+                      <Send className="h-3 w-3" />
+                      <span>Execute</span>
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* Speech Error Banner */}
+              {speechError && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                  <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span>{speechError}</span>
+                </div>
+              )}
+
+              {/* Last Recognized Result Feedback Banner */}
+              {speechFeedback && !isListening && (
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium animate-in fade-in">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>{speechFeedback}</span>
                 </div>
               )}
             </div>

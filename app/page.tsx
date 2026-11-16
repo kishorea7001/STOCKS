@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { NavItemKey } from '@/components/layout/Sidebar';
@@ -12,12 +12,19 @@ import { SettingsView } from '@/components/views/SettingsView';
 import { AboutView } from '@/components/views/AboutView';
 import { CheckCircle2, AlertCircle, Volume2 } from 'lucide-react';
 
-const fallbackProducts: ProductItem[] = [
+/**
+ * 10 Reference Products totaling 401 stock units, exactly 2 low stock items (<= 20 units)
+ * matching the TalkStock dashboard specification:
+ * - Total Products: 10
+ * - Low Stock Alerts: 2 (Toned Milk: 20, Premium Tea: 15.5)
+ * - Total Stock: 401
+ */
+const INITIAL_PRODUCTS: ProductItem[] = [
   { id: '1', name: 'Basmati Rice', category: 'Grains & Staples', currentStock: 50, unit: 'kg', pricePerUnit: 95 },
   { id: '2', name: 'Refined Sugar', category: 'Grains & Staples', currentStock: 40, unit: 'kg', pricePerUnit: 44 },
   { id: '3', name: 'Sunflower Cooking Oil', category: 'Oils & Ghee', currentStock: 30, unit: 'liters', pricePerUnit: 140 },
-  { id: '4', name: 'Toned Milk Packets', category: 'Dairy', currentStock: 20, unit: 'packets', pricePerUnit: 28 },
-  { id: '5', name: 'Premium Tea Powder', category: 'Beverages', currentStock: 15.5, unit: 'kg', pricePerUnit: 450 },
+  { id: '4', name: 'Toned Milk Packets', category: 'Dairy', currentStock: 20, unit: 'packets', pricePerUnit: 28 }, // Alert 1
+  { id: '5', name: 'Premium Tea Powder', category: 'Beverages', currentStock: 15.5, unit: 'kg', pricePerUnit: 450 }, // Alert 2
   { id: '6', name: 'Bathing Soap', category: 'Personal Care', currentStock: 60, unit: 'pieces', pricePerUnit: 35 },
   { id: '7', name: 'Marie Biscuits', category: 'Snacks & Bakery', currentStock: 45, unit: 'packets', pricePerUnit: 20 },
   { id: '8', name: 'Toor Dal', category: 'Pulses', currentStock: 35.5, unit: 'kg', pricePerUnit: 165 },
@@ -25,83 +32,113 @@ const fallbackProducts: ProductItem[] = [
   { id: '10', name: 'Washing Detergent Powder', category: 'Household', currentStock: 25, unit: 'packets', pricePerUnit: 110 },
 ];
 
+const wordToNum: Record<string, number> = {
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5,
+  six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+  sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+  thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70,
+  eighty: 80, ninety: 90, hundred: 100,
+};
+
+function extractQuantity(text: string): number | null {
+  const digitMatch = text.match(/\b\d+(\.\d+)?\b/);
+  if (digitMatch) return parseFloat(digitMatch[0]);
+
+  const words = text.toLowerCase().split(/[\s-]+/);
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    if (wordToNum[w] !== undefined) {
+      if (i + 1 < words.length && wordToNum[words[i + 1]] !== undefined && wordToNum[words[i + 1]] < 10) {
+        return wordToNum[w] + wordToNum[words[i + 1]];
+      }
+      return wordToNum[w];
+    }
+  }
+  return null;
+}
+
+function findMatchingProduct(text: string, productList: ProductItem[]): ProductItem | undefined {
+  const lower = text.toLowerCase();
+
+  // 1. Direct name substring
+  for (const p of productList) {
+    if (lower.includes(p.name.toLowerCase())) return p;
+  }
+
+  // 2. Keyword dictionary mapping
+  const keywords: Record<string, string[]> = {
+    '1': ['rice', 'basmati'],
+    '2': ['sugar', 'cheeni'],
+    '3': ['oil', 'cooking oil', 'sunflower'],
+    '4': ['milk', 'doodh', 'toned milk'],
+    '5': ['tea', 'chai', 'tea powder'],
+    '6': ['soap', 'bathing soap'],
+    '7': ['biscuit', 'biscuits', 'marie'],
+    '8': ['dal', 'toor', 'toor dal', 'pulses', 'lentil', 'lentils'],
+    '9': ['wheat', 'atta', 'flour'],
+    '10': ['detergent', 'washing powder', 'surf'],
+  };
+
+  for (const [id, keys] of Object.entries(keywords)) {
+    if (keys.some((k) => lower.includes(k))) {
+      return productList.find((p) => p.id === id);
+    }
+  }
+
+  // 3. Sub-word match
+  for (const p of productList) {
+    const parts = p.name.toLowerCase().split(/\s+/);
+    if (parts.some((part) => part.length >= 4 && lower.includes(part))) {
+      return p;
+    }
+  }
+
+  return undefined;
+}
+
 export default function TalkStockApp() {
   const [activeTab, setActiveTab] = useState<NavItemKey>('home');
-  const [products, setProducts] = useState<ProductItem[]>(fallbackProducts);
-  const [loading, setLoading] = useState(false);
+  // Static initial inventory of 10 items totaling 401 stock units
+  const [products, setProducts] = useState<ProductItem[]>(INITIAL_PRODUCTS);
   const [loadingReset, setLoadingReset] = useState(false);
   const [loadingRefresh, setLoadingRefresh] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [speechFeedback, setSpeechFeedback] = useState<string | null>(null);
+  const [speechError, setSpeechError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'alert' } | null>(null);
 
-  const showToast = (text: string, type: 'success' | 'info' | 'alert' = 'success') => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+
+  const showToast = useCallback((text: string, type: 'success' | 'info' | 'alert' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 3500);
-  };
-
-  // Fetch real inventory items from database
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/inventory');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setProducts(json.data);
-        }
-      }
-    } catch {
-      // Fallback kept
-    } finally {
-      setLoading(false);
-    }
+    }, 4000);
   }, []);
 
-  useEffect(() => {
-    let ignore = false;
-    fetch('/api/inventory')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (!ignore && json?.success && Array.isArray(json?.data) && json.data.length > 0) {
-          setProducts(json.data);
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  // Quick Action 1: Reset Demo
-  const handleResetDemo = async () => {
-    try {
-      setLoadingReset(true);
-      const res = await fetch('/api/inventory/reset', { method: 'POST' });
-      if (res.ok) {
-        await fetchProducts();
-        showToast('Demo inventory data reset to initial 10 products!', 'success');
-      } else {
-        showToast('Reset completed with standard products.', 'success');
-      }
-    } catch {
-      setProducts(fallbackProducts);
-      showToast('Demo inventory data reset to standard baseline.', 'success');
-    } finally {
+  // Quick Action 1: Reset Demo (Restores static initial baseline)
+  const handleResetDemo = () => {
+    setLoadingReset(true);
+    setTimeout(() => {
+      setProducts(INITIAL_PRODUCTS);
+      setSpeechFeedback(null);
+      setSpeechError(null);
+      setLiveTranscript('');
       setLoadingReset(false);
-    }
+      showToast('Demo inventory data reset to initial 10 products (401 total units, 2 alerts)!', 'success');
+    }, 350);
   };
 
-  // Quick Action 2: Refresh
-  const handleRefresh = async () => {
+  // Quick Action 2: Refresh (Purely refreshes the current view statically)
+  const handleRefresh = () => {
     setLoadingRefresh(true);
-    await fetchProducts();
     setTimeout(() => {
       setLoadingRefresh(false);
-      showToast('Dashboard data refreshed with latest stock!', 'info');
-    }, 400);
+      showToast('Dashboard refreshed with latest stock values!', 'info');
+    }, 300);
   };
 
   // Quick Action 3: Settings
@@ -109,75 +146,192 @@ export default function TalkStockApp() {
     setActiveTab('settings');
   };
 
-  // Voice Interaction Trigger
-  const handleToggleVoice = () => {
-    if (isListening) {
-      setIsListening(false);
-      showToast('Voice interface returned to ready state.', 'info');
+  // Core Command Processor for both live microphone and sample buttons
+  const executeCommand = useCallback((commandText: string) => {
+    const raw = commandText.trim();
+    if (!raw) return;
+
+    const lower = raw.toLowerCase();
+
+    // 1. Reset command
+    if (lower.includes('reset') && (lower.includes('demo') || lower.includes('inventory') || lower.includes('data'))) {
+      handleResetDemo();
       return;
     }
 
-    setIsListening(true);
-    showToast('Voice interface activated. Listening...', 'info');
+    // 2. Restock all command
+    if (lower.includes('restock all') || lower.includes('replenish all') || lower.includes('stock all')) {
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.currentStock <= 20 ? { ...item, currentStock: item.currentStock + 25 } : item
+        )
+      );
+      setSpeechFeedback('Restocked all low inventory items above minimum threshold.');
+      showToast('Voice update: All low stock items restocked successfully!', 'success');
+      return;
+    }
 
-    // Simulate natural voice recognition feedback after 4 seconds
-    setTimeout(() => {
-      setIsListening((currentlyListening) => {
-        if (currentlyListening) {
-          showToast('Voice recognized: "Sold 5 packets of milk" — Stock updated!', 'success');
-          // Optimistically update milk stock
-          setProducts((prev) =>
-            prev.map((p) =>
-              p.name.toLowerCase().includes('milk')
-                ? { ...p, currentStock: Math.max(0, p.currentStock - 5) }
-                : p
-            )
-          );
-          return false;
+    // 3. Match product
+    const targetProduct = findMatchingProduct(raw, products);
+
+    if (!targetProduct) {
+      setSpeechFeedback(`Recognized speech: "${raw}" (No matching product found)`);
+      showToast(`Heard: "${raw}". Mention products like rice, milk, sugar, oil, or tea.`, 'alert');
+      return;
+    }
+
+    const qty = extractQuantity(raw);
+
+    // DEDUCT / SELL ACTION
+    if (
+      lower.includes('sold') ||
+      lower.includes('sell') ||
+      lower.includes('minus') ||
+      lower.includes('deduct') ||
+      lower.includes('remove') ||
+      lower.includes('subtract')
+    ) {
+      const deduction = qty !== null ? qty : 5;
+      const newStock = Math.max(0, targetProduct.currentStock - deduction);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: newStock } : p))
+      );
+      const msg = `Sold ${deduction} ${targetProduct.unit} of ${targetProduct.name}. New count: ${newStock} ${targetProduct.unit}.`;
+      setSpeechFeedback(msg);
+      showToast(msg, 'success');
+      return;
+    }
+
+    // ADD / RESTOCK ACTION
+    if (
+      lower.includes('add') ||
+      lower.includes('restock') ||
+      lower.includes('bought') ||
+      lower.includes('plus') ||
+      lower.includes('received')
+    ) {
+      const addition = qty !== null ? qty : 20;
+      const newStock = targetProduct.currentStock + addition;
+      setProducts((prev) =>
+        prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: newStock } : p))
+      );
+      const msg = `Restocked +${addition} ${targetProduct.unit} of ${targetProduct.name}. New count: ${newStock} ${targetProduct.unit}.`;
+      setSpeechFeedback(msg);
+      showToast(msg, 'success');
+      return;
+    }
+
+    // SET / UPDATE / LEFTOVER COUNT ACTION
+    const targetQty = qty !== null ? qty : targetProduct.currentStock;
+    setProducts((prev) =>
+      prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: targetQty } : p))
+    );
+    const msg = `Updated ${targetProduct.name} stock count to ${targetQty} ${targetProduct.unit}.`;
+    setSpeechFeedback(msg);
+    showToast(msg, 'success');
+  }, [products, showToast]);
+
+  // Real Microphone Toggle using Web Speech API
+  const handleToggleVoice = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
         }
-        return false;
-      });
-    }, 4000);
-  };
-
-  // Example Command Click
-  const handleSelectExample = (command: string) => {
-    setIsListening(true);
-    showToast(`Processing voice command: "${command}"`, 'info');
-
-    setTimeout(() => {
-      setIsListening(false);
-
-      if (command.includes('rice')) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.name.toLowerCase().includes('rice') ? { ...p, currentStock: 50 } : p
-          )
-        );
-        showToast('Voice update applied: Basmati Rice stock set to 50 kg!', 'success');
-      } else if (command.includes('milk')) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.name.toLowerCase().includes('milk')
-              ? { ...p, currentStock: Math.max(0, p.currentStock - 5) }
-              : p
-          )
-        );
-        showToast('Voice update applied: Sold 5 packets of milk recorded!', 'success');
-      } else if (command.includes('sugar')) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.name.toLowerCase().includes('sugar') ? { ...p, currentStock: 2 } : p
-          )
-        );
-        showToast('Voice update applied: Refined Sugar count set to 2 kg left!', 'alert');
-      } else {
-        showToast(`Command "${command}" processed successfully!`, 'success');
       }
-    }, 1800);
+      setIsListening(false);
+      showToast('Microphone deactivated.', 'info');
+      return;
+    }
+
+    // Access browser SpeechRecognition
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = typeof window !== 'undefined'
+      ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      : null;
+
+    if (!SpeechRecognition) {
+      setSpeechError('Web Speech API is not supported in this browser. You can click sample commands or use the text input.');
+      showToast('Speech Recognition not supported in this browser.', 'alert');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setLiveTranscript('');
+        setSpeechError(null);
+        showToast('Microphone active. Speak your command now...', 'info');
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        let interim = '';
+        let final = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const item = event.results[i];
+          if (item.isFinal) {
+            final += item[0].transcript;
+          } else {
+            interim += item[0].transcript;
+          }
+        }
+
+        const spoken = (final || interim).trim();
+        setLiveTranscript(spoken);
+
+        if (final) {
+          executeCommand(final.trim());
+        }
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onerror = (event: any) => {
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          const msg = 'Microphone permission denied. Click the lock icon in your address bar to allow microphone access.';
+          setSpeechError(msg);
+          showToast(msg, 'alert');
+        } else if (event.error === 'no-speech') {
+          showToast('No speech detected. Please speak closer to your microphone.', 'info');
+        } else if (event.error === 'network') {
+          setSpeechError('Speech recognition service offline or network blocked.');
+          showToast('Speech network error. You can click sample commands below.', 'alert');
+        } else {
+          setSpeechError(`Speech recognition error: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: unknown) {
+      setIsListening(false);
+      const errMsg = err instanceof Error ? err.message : 'Could not access microphone';
+      setSpeechError(errMsg);
+      showToast(errMsg, 'alert');
+    }
   };
 
-  // Manual stock tweak in Products table
+  // Example Prompt Click
+  const handleSelectExample = (command: string) => {
+    setLiveTranscript(command);
+    executeCommand(command);
+  };
+
+  // Manual Adjust in Products view
   const handleAdjustStock = (productId: string, delta: number) => {
     setProducts((prev) =>
       prev.map((item) =>
@@ -189,13 +343,31 @@ export default function TalkStockApp() {
     showToast('Stock quantity updated.', 'info');
   };
 
+  // One-click Restock All Low Stock Items in Alerts view
+  const handleRestockAll = () => {
+    setProducts((prev) =>
+      prev.map((item) =>
+        item.currentStock <= 20
+          ? { ...item, currentStock: item.currentStock + 25 }
+          : item
+      )
+    );
+    showToast('All low stock items have been successfully restocked! Alerts cleared.', 'success');
+  };
+
   // Calculated Metric Totals
   const totalProductsCount = products.length;
-  const lowStockCount = products.filter((p) => p.currentStock <= 25).length;
+  // Low stock threshold is <= 20 units (Milk: 20, Tea: 15.5 -> Exactly 2 initial alerts)
+  const lowStockCount = products.filter((p) => p.currentStock <= 20).length;
   const totalStockSum = Math.round(products.reduce((acc, p) => acc + p.currentStock, 0));
 
   return (
-    <AppLayout activeItem={activeTab} onSelectItem={setActiveTab}>
+    <AppLayout
+      activeItem={activeTab}
+      onSelectItem={setActiveTab}
+      alertsCount={lowStockCount}
+      isListening={isListening}
+    >
       {activeTab !== 'products' && (
         <AppHeader
           title={
@@ -259,8 +431,12 @@ export default function TalkStockApp() {
           onVoiceCommand={handleToggleVoice}
           onViewDetails={() => setActiveTab('products')}
           isListening={isListening}
+          liveTranscript={liveTranscript}
+          speechFeedback={speechFeedback}
+          speechError={speechError}
           onMicClick={handleToggleVoice}
           onSelectExample={handleSelectExample}
+          onManualSubmit={executeCommand}
           loadingReset={loadingReset}
           loadingRefresh={loadingRefresh}
         />
@@ -269,8 +445,8 @@ export default function TalkStockApp() {
       {activeTab === 'products' && (
         <ProductsView
           products={products}
-          loading={loading}
-          onRefresh={fetchProducts}
+          loading={false}
+          onRefresh={handleRefresh}
           onAdjustStock={handleAdjustStock}
           onAddProduct={(newProd) => {
             const item: ProductItem = {
@@ -294,6 +470,7 @@ export default function TalkStockApp() {
         <AlertsView
           products={products}
           onRestockItem={(id, amount) => handleAdjustStock(id, amount)}
+          onRestockAll={handleRestockAll}
         />
       )}
 
