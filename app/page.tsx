@@ -196,34 +196,32 @@ export default function TalkStockApp() {
 
   return (
     <AppLayout activeItem={activeTab} onSelectItem={setActiveTab}>
-      <AppHeader
-        title={
-          activeTab === 'home'
-            ? 'Welcome to TalkStock'
-            : activeTab === 'products'
-            ? 'Products Inventory'
-            : activeTab === 'leftover'
-            ? 'Leftover Stock'
-            : activeTab === 'alerts'
-            ? 'Inventory Alerts'
-            : activeTab === 'settings'
-            ? 'Application Settings'
-            : 'About TalkStock'
-        }
-        subtitle={
-          activeTab === 'home'
-            ? 'Manage your business inventory with the power of voice.'
-            : activeTab === 'products'
-            ? 'Manage all your catalog items, units, and reorder levels.'
-            : activeTab === 'leftover'
-            ? 'Review end-of-day leftover stock and surplus inventory.'
-            : activeTab === 'alerts'
-            ? 'Real-time alerts for low stock and depleted items.'
-            : activeTab === 'settings'
-            ? 'Configure voice models, currency, and notifications.'
-            : 'Voice-first inventory intelligence for modern businesses.'
-        }
-      />
+      {activeTab !== 'products' && (
+        <AppHeader
+          title={
+            activeTab === 'home'
+              ? 'Welcome to TalkStock'
+              : activeTab === 'leftover'
+              ? 'Leftover Stock'
+              : activeTab === 'alerts'
+              ? 'Inventory Alerts'
+              : activeTab === 'settings'
+              ? 'Application Settings'
+              : 'About TalkStock'
+          }
+          subtitle={
+            activeTab === 'home'
+              ? 'Manage your business inventory with the power of voice.'
+              : activeTab === 'leftover'
+              ? 'Review end-of-day leftover stock and surplus inventory.'
+              : activeTab === 'alerts'
+              ? 'Real-time alerts for low stock and depleted items.'
+              : activeTab === 'settings'
+              ? 'Configure voice models, currency, and notifications.'
+              : 'Voice-first inventory intelligence for modern businesses.'
+          }
+        />
+      )}
 
       {/* Floating Action / Toast Feedback Notification */}
       {toastMessage && (
@@ -274,6 +272,14 @@ export default function TalkStockApp() {
           loading={loading}
           onRefresh={fetchProducts}
           onAdjustStock={handleAdjustStock}
+          onAddProduct={(newProd) => {
+            const item: ProductItem = {
+              ...newProd,
+              id: `prod-${Date.now()}`,
+            };
+            setProducts((prev) => [item, ...prev]);
+            showToast(`Added new product: ${newProd.name}`, 'success');
+          }}
         />
       )}
 
