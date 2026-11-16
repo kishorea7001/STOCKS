@@ -54,6 +54,12 @@ export function ProductsView({
   onAddProduct,
   className = '',
 }: ProductsViewProps) {
+  const safeProducts = useMemo(() => {
+    return Array.isArray(products) && products.length > 0
+      ? products
+      : defaultExampleProducts;
+  }, [products]);
+
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -67,22 +73,22 @@ export function ProductsView({
 
   const categories = useMemo(() => {
     const set = new Set<string>();
-    products.forEach((p) => set.add(p.category));
+    safeProducts.forEach((p) => set.add(p.category));
     return ['All', ...Array.from(set)];
-  }, [products]);
+  }, [safeProducts]);
 
   const filtered = useMemo(() => {
-    return products.filter((p) => {
+    return safeProducts.filter((p) => {
       const matchName = p.name.toLowerCase().includes(search.toLowerCase());
       const matchCat = selectedCat === 'All' || p.category === selectedCat;
       return matchName && matchCat;
     });
-  }, [products, search, selectedCat]);
+  }, [safeProducts, search, selectedCat]);
 
   // Metric Totals
-  const inStockCount = products.filter((p) => p.currentStock > 20).length;
-  const lowStockCount = products.filter((p) => p.currentStock > 0 && p.currentStock <= 20).length;
-  const outOfStockCount = products.filter((p) => p.currentStock <= 0).length;
+  const inStockCount = safeProducts.filter((p) => p.currentStock > 20).length;
+  const lowStockCount = safeProducts.filter((p) => p.currentStock > 0 && p.currentStock <= 20).length;
+  const outOfStockCount = safeProducts.filter((p) => p.currentStock <= 0).length;
 
   const handleCreateProduct = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +143,7 @@ export function ProductsView({
             <Boxes className="h-4 w-4 text-blue-600" />
           </div>
           <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-2">
-            {products.length}
+            {safeProducts.length}
           </p>
         </div>
 
@@ -211,7 +217,7 @@ export function ProductsView({
       {/* 4. Clean Product Table / Card Layout */}
       <Card
         title="Products Inventory"
-        subtitle={`Displaying ${filtered.length} of ${products.length} registered products`}
+        subtitle={`Displaying ${filtered.length} of ${safeProducts.length} registered products`}
         icon={<Package className="h-5 w-5 text-blue-600" />}
         action={
           onRefresh && (

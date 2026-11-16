@@ -13,13 +13,14 @@ export interface LeftoverStockViewProps {
 }
 
 export function LeftoverStockView({
-  products,
+  products = [],
   onGoToProducts,
   className = '',
 }: LeftoverStockViewProps) {
-  const totalLeftoverUnits = products.reduce((acc, p) => acc + p.currentStock, 0);
-  const totalValuation = products.reduce(
-    (acc, p) => acc + p.currentStock * p.pricePerUnit,
+  const safeProducts = Array.isArray(products) ? products : [];
+  const totalLeftoverUnits = safeProducts.reduce((acc, p) => acc + (p.currentStock || 0), 0);
+  const totalValuation = safeProducts.reduce(
+    (acc, p) => acc + (p.currentStock || 0) * (p.pricePerUnit || 0),
     0
   );
 
@@ -36,7 +37,7 @@ export function LeftoverStockView({
             <span className="text-sm font-normal text-slate-500">Units Total</span>
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            Across {products.length} catalog items
+            Across {safeProducts.length} catalog items
           </p>
         </div>
 
@@ -72,7 +73,7 @@ export function LeftoverStockView({
         }
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((item) => (
+          {safeProducts.map((item) => (
             <div
               key={item.id}
               className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 hover:border-slate-200 transition-all flex flex-col justify-between"

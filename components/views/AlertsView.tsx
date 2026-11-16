@@ -14,12 +14,13 @@ export interface AlertsViewProps {
 }
 
 export function AlertsView({
-  products,
+  products = [],
   onRestockItem,
   className = '',
 }: AlertsViewProps) {
+  const safeProducts = Array.isArray(products) ? products : [];
   // Items with low stock (e.g. <= 25 units)
-  const lowStockItems = products.filter((p) => p.currentStock <= 25);
+  const lowStockItems = safeProducts.filter((p) => p.currentStock <= 25);
 
   return (
     <div className={`space-y-6 ${className}`}>
