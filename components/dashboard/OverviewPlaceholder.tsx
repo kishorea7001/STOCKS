@@ -18,6 +18,7 @@ import {
 import { StatCard } from '../ui/StatCard';
 import { Card } from '../ui/Card';
 import { QuickActionTile } from '../ui/QuickActionTile';
+import { VoiceInteractionCard } from './VoiceInteractionCard';
 
 export function OverviewPlaceholder() {
   return (
@@ -98,51 +99,8 @@ export function OverviewPlaceholder() {
         </Card>
       </section>
 
-      {/* 3. Voice Command Section */}
-      <section aria-label="Voice Command Interaction">
-        <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-indigo-50/60 p-6 md:p-8 shadow-[0_4px_24px_rgba(37,99,235,0.04)]">
-          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
-            {/* Left: Glowing Circular Microphone Button */}
-            <div className="relative flex items-center justify-center shrink-0">
-              {/* Concentric glowing rings */}
-              <div className="absolute h-28 w-28 rounded-full bg-blue-400/10 animate-ping opacity-75" />
-              <div className="absolute h-24 w-24 rounded-full bg-blue-500/15" />
-              <button
-                type="button"
-                className="relative flex h-18 w-18 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                aria-label="Tap to speak voice command"
-              >
-                <Mic className="h-8 w-8" />
-              </button>
-            </div>
-
-            {/* Right: Tap to Speak text & Example commands */}
-            <div className="flex-1 text-center md:text-left space-y-2.5">
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
-                  Tap to Speak
-                </h3>
-                <p className="text-xs md:text-sm text-slate-500 font-medium">
-                  Say something like:
-                </p>
-              </div>
-
-              {/* Sample Command Chips Container */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
-                <span className="inline-flex items-center rounded-xl bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs border border-blue-100/80">
-                  &ldquo;Update rice count to 50&rdquo;
-                </span>
-                <span className="inline-flex items-center rounded-xl bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs border border-blue-100/80">
-                  &ldquo;Sold 5 packets of milk&rdquo;
-                </span>
-                <span className="inline-flex items-center rounded-xl bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs border border-blue-100/80">
-                  &ldquo;2 kg sugar left&rdquo;
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 3. Large Prominent Voice Interaction Card */}
+      <VoiceInteractionCard />
 
       {/* 4. Modular Dashboard Content Slots (Placeholder Framework) */}
       <section aria-label="Dashboard Framework">
