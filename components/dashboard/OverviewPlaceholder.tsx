@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-  Boxes,
+  Box,
   AlertTriangle,
   Package,
   Zap,
@@ -22,27 +22,31 @@ import { QuickActionTile } from '../ui/QuickActionTile';
 export function OverviewPlaceholder() {
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* 1. Statistics Cards Row */}
+      {/* 1. Statistics Cards Row (Equal Height, Perfectly Aligned) */}
       <section aria-label="Key Statistics">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-stretch">
+          {/* Card 1: Total Products (Light blue gradient, blue-tinted border, blue cube icon, 10) */}
           <StatCard
-            label="Total Products"
-            value="10"
+            title="Total Products"
+            number="10"
             variant="blue"
-            icon={<Boxes className="h-6 w-6" />}
+            icon={<Box className="h-6 w-6 text-blue-600" />}
           />
+
+          {/* Card 2: Low Stock Alerts (Light green gradient, green-tinted border, green warning icon, 2) */}
           <StatCard
-            label="Low Stock Alerts"
-            value="2"
+            title="Low Stock Alerts"
+            number="2"
             variant="green"
-            icon={<AlertTriangle className="h-6 w-6" />}
+            icon={<AlertTriangle className="h-6 w-6 text-emerald-600" />}
           />
+
+          {/* Card 3: 401 / View Details → (Light purple gradient, purple-tinted border, purple package icon) */}
           <StatCard
-            label="Inventory Details"
-            value="401"
+            number="401"
+            linkText="View Details →"
             variant="purple"
-            icon={<Package className="h-6 w-6" />}
-            linkText="View Details"
+            icon={<Package className="h-6 w-6 text-purple-600" />}
           />
         </div>
       </section>

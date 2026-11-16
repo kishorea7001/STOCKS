@@ -2,58 +2,42 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 
 export interface StatCardProps {
-  label: string;
-  value: string | number;
-  variant?: 'blue' | 'green' | 'purple' | 'yellow';
-  icon: React.ReactNode;
+  number: string | number;
+  title?: string;
   linkText?: string;
   onLinkClick?: () => void;
-  trendText?: string;
+  icon: React.ReactNode;
+  variant: 'blue' | 'green' | 'purple';
   className?: string;
 }
 
 export function StatCard({
-  label,
-  value,
-  variant = 'blue',
-  icon,
+  number,
+  title,
   linkText,
   onLinkClick,
-  trendText,
+  icon,
+  variant,
   className = '',
 }: StatCardProps) {
   const variantStyles = {
     blue: {
-      cardBg:
-        'bg-gradient-to-br from-blue-50/70 via-white to-blue-50/30 border-blue-100/70 hover:border-blue-200 hover:shadow-blue-500/5',
-      iconBox: 'bg-blue-600 text-white shadow-sm shadow-blue-500/20',
-      valueColor: 'text-slate-900',
-      labelColor: 'text-slate-600',
-      linkColor: 'text-blue-600 hover:text-blue-700',
+      card: 'bg-gradient-to-br from-blue-50/90 via-sky-50/50 to-white/95 border-blue-200/80 shadow-[0_4px_24px_rgba(37,99,235,0.06)] hover:border-blue-300 hover:shadow-[0_8px_30px_rgba(37,99,235,0.12)]',
+      iconWrapper: 'bg-blue-100/70 text-blue-600 border border-blue-200/60 shadow-xs',
+      text: 'text-slate-600',
+      link: 'text-blue-600 hover:text-blue-700',
     },
     green: {
-      cardBg:
-        'bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 border-emerald-100/70 hover:border-emerald-200 hover:shadow-emerald-500/5',
-      iconBox: 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20',
-      valueColor: 'text-slate-900',
-      labelColor: 'text-slate-600',
-      linkColor: 'text-emerald-700 hover:text-emerald-800',
+      card: 'bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white/95 border-emerald-200/80 shadow-[0_4px_24px_rgba(16,185,129,0.06)] hover:border-emerald-300 hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)]',
+      iconWrapper: 'bg-emerald-100/70 text-emerald-600 border border-emerald-200/60 shadow-xs',
+      text: 'text-slate-600',
+      link: 'text-emerald-700 hover:text-emerald-800',
     },
     purple: {
-      cardBg:
-        'bg-gradient-to-br from-purple-50/70 via-white to-violet-50/30 border-purple-100/70 hover:border-purple-200 hover:shadow-purple-500/5',
-      iconBox: 'bg-purple-600 text-white shadow-sm shadow-purple-500/20',
-      valueColor: 'text-slate-900',
-      labelColor: 'text-slate-600',
-      linkColor: 'text-purple-600 hover:text-purple-700',
-    },
-    yellow: {
-      cardBg:
-        'bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/30 border-amber-100/70 hover:border-amber-200 hover:shadow-amber-500/5',
-      iconBox: 'bg-amber-500 text-white shadow-sm shadow-amber-500/20',
-      valueColor: 'text-slate-900',
-      labelColor: 'text-slate-600',
-      linkColor: 'text-amber-700 hover:text-amber-800',
+      card: 'bg-gradient-to-br from-purple-50/90 via-violet-50/50 to-white/95 border-purple-200/80 shadow-[0_4px_24px_rgba(139,92,246,0.06)] hover:border-purple-300 hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]',
+      iconWrapper: 'bg-purple-100/70 text-purple-600 border border-purple-200/60 shadow-xs',
+      text: 'text-slate-600',
+      link: 'text-purple-600 hover:text-purple-700',
     },
   };
 
@@ -61,44 +45,40 @@ export function StatCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl md:rounded-3xl border p-6 md:p-7 shadow-[0_4px_24px_rgba(15,23,42,0.03)] transition-all duration-200 hover:shadow-[0_8px_30px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 ${style.cardBg} ${className}`}
+      className={`h-full flex flex-col justify-between rounded-2xl md:rounded-3xl border p-6 md:p-7 transition-all duration-200 hover:-translate-y-0.5 cursor-default ${style.card} ${className}`}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div
-            className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${style.iconBox}`}
-          >
-            {icon}
-          </div>
-          <div className="pt-2">
-            <p className={`text-3xl md:text-4xl font-bold tracking-tight ${style.valueColor}`}>
-              {value}
-            </p>
-            <p className={`text-xs md:text-sm font-medium mt-1 ${style.labelColor}`}>
-              {label}
-            </p>
-          </div>
+      {/* Top: Icon */}
+      <div>
+        <div
+          className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${style.iconWrapper}`}
+        >
+          {icon}
         </div>
-
-        {trendText && (
-          <span className="inline-flex items-center rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-xs border border-slate-100">
-            {trendText}
-          </span>
-        )}
       </div>
 
-      {linkText && (
-        <div className="mt-4 pt-3 border-t border-slate-100/60 flex items-center justify-end">
+      {/* Bottom: Large Number and Title / Action */}
+      <div className="mt-5 space-y-1">
+        <p className="text-4xl md:text-5xl font-extrabold text-[#0F172A] tracking-tight leading-none">
+          {number}
+        </p>
+
+        {title && (
+          <p className={`text-sm md:text-[15px] font-semibold tracking-tight pt-1 ${style.text}`}>
+            {title}
+          </p>
+        )}
+
+        {linkText && (
           <button
             type="button"
             onClick={onLinkClick}
-            className={`group inline-flex items-center gap-1.5 text-xs md:text-sm font-semibold transition-colors cursor-pointer ${style.linkColor}`}
+            className={`group inline-flex items-center gap-1.5 text-sm md:text-[15px] font-semibold tracking-tight pt-1 transition-colors cursor-pointer ${style.link}`}
           >
             <span>{linkText}</span>
-            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-1" />
+            <ArrowRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1" />
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
