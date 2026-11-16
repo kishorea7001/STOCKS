@@ -18,7 +18,37 @@ import { QuickActionTile } from '../ui/QuickActionTile';
 import { VoiceInteractionCard } from './VoiceInteractionCard';
 import { DashboardOverviewCard } from './DashboardOverviewCard';
 
-export function OverviewPlaceholder() {
+export interface OverviewPlaceholderProps {
+  totalProductsCount?: number;
+  lowStockCount?: number;
+  totalStockSum?: number;
+  onResetDemo?: () => void;
+  onRefresh?: () => void;
+  onOpenSettings?: () => void;
+  onVoiceCommand?: () => void;
+  onViewDetails?: () => void;
+  isListening?: boolean;
+  onMicClick?: () => void;
+  onSelectExample?: (cmd: string) => void;
+  loadingReset?: boolean;
+  loadingRefresh?: boolean;
+}
+
+export function OverviewPlaceholder({
+  totalProductsCount = 10,
+  lowStockCount = 2,
+  totalStockSum = 401,
+  onResetDemo,
+  onRefresh,
+  onOpenSettings,
+  onVoiceCommand,
+  onViewDetails,
+  isListening = false,
+  onMicClick,
+  onSelectExample,
+  loadingReset = false,
+  loadingRefresh = false,
+}: OverviewPlaceholderProps) {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* 1. Statistics Cards Row (Equal Height, Perfectly Aligned) */}
@@ -27,7 +57,7 @@ export function OverviewPlaceholder() {
           {/* Card 1: Total Products */}
           <StatCard
             title="Total Products"
-            number="10"
+            number={totalProductsCount}
             variant="blue"
             icon={<Box className="h-6 w-6 text-blue-600" />}
           />
@@ -35,15 +65,16 @@ export function OverviewPlaceholder() {
           {/* Card 2: Low Stock Alerts */}
           <StatCard
             title="Low Stock Alerts"
-            number="2"
+            number={lowStockCount}
             variant="green"
             icon={<AlertTriangle className="h-6 w-6 text-emerald-600" />}
           />
 
           {/* Card 3: 401 / View Details → */}
           <StatCard
-            number="401"
+            number={totalStockSum}
             linkText="View Details →"
+            onLinkClick={onViewDetails}
             variant="purple"
             icon={<Package className="h-6 w-6 text-purple-600" />}
           />
@@ -58,6 +89,7 @@ export function OverviewPlaceholder() {
           action={
             <button
               type="button"
+              onClick={onViewDetails}
               className="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
             >
               <span>See All</span>
@@ -68,37 +100,65 @@ export function OverviewPlaceholder() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
             {/* Button 1: Reset Demo (Light blue bg, blue icon/text) */}
             <QuickActionTile
-              label="Reset Demo"
+              label={loadingReset ? 'Resetting...' : 'Reset Demo'}
               variant="blue"
-              icon={<RotateCcw className="h-8 w-8 stroke-[2.2]" />}
+              onClick={onResetDemo}
+              disabled={loadingReset}
+              icon={
+                <RotateCcw
+                  className={`h-8 w-8 stroke-[2.2] ${
+                    loadingReset ? 'animate-spin' : ''
+                  }`}
+                />
+              }
             />
 
             {/* Button 2: Refresh (Light green bg, green icon/text) */}
             <QuickActionTile
-              label="Refresh"
+              label={loadingRefresh ? 'Refreshing...' : 'Refresh'}
               variant="green"
-              icon={<RefreshCw className="h-8 w-8 stroke-[2.2]" />}
+              onClick={onRefresh}
+              disabled={loadingRefresh}
+              icon={
+                <RefreshCw
+                  className={`h-8 w-8 stroke-[2.2] ${
+                    loadingRefresh ? 'animate-spin' : ''
+                  }`}
+                />
+              }
             />
 
             {/* Button 3: Settings (Light purple bg, purple icon/text) */}
             <QuickActionTile
               label="Settings"
               variant="purple"
+              onClick={onOpenSettings}
               icon={<Settings className="h-8 w-8 stroke-[2.2]" />}
             />
 
             {/* Button 4: Voice Command (Light blue bg, blue icon/text) */}
             <QuickActionTile
-              label="Voice Command"
+              label={isListening ? 'Listening...' : 'Voice Command'}
               variant="blue"
-              icon={<Mic className="h-8 w-8 stroke-[2.2]" />}
+              onClick={onVoiceCommand || onMicClick}
+              icon={
+                <Mic
+                  className={`h-8 w-8 stroke-[2.2] ${
+                    isListening ? 'animate-bounce text-blue-700' : ''
+                  }`}
+                />
+              }
             />
           </div>
         </Card>
       </section>
 
       {/* 3. Large Prominent Voice Interaction Card */}
-      <VoiceInteractionCard />
+      <VoiceInteractionCard
+        isListening={isListening}
+        onMicClick={onMicClick}
+        onSelectExample={onSelectExample}
+      />
 
       {/* 4. Dashboard Overview Smooth Line Chart Card */}
       <DashboardOverviewCard />
