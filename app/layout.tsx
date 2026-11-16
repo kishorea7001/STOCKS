@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './tailwind.css';
 
 export const metadata: Metadata = {
   title: 'TalkStock - Smart Inventory, Powered by Voice',

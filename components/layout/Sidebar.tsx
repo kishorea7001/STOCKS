@@ -41,6 +41,9 @@ function BlueCubeLogo({ className = 'h-11 w-11' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 64 64"
+      width={44}
+      height={44}
+      style={{ width: 44, height: 44, maxWidth: 44, maxHeight: 44 }}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
