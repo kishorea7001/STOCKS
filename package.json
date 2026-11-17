@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "npm run css && next dev",
-    "build": "npm run css && next build",
+    "build": "npm run css && prisma generate && next build",
+    "postinstall": "prisma generate",
     "css": "npx tailwindcss -i app/globals.css -o app/tailwind.css",
     "start": "next start",
     "lint": "eslint",
