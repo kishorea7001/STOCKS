@@ -133,10 +133,21 @@ export function VoiceInteractionCard({
                   </div>
 
                   {/* Real-time Spoken Transcript Box */}
-                  <div className="p-3.5 rounded-xl bg-blue-50/90 border border-blue-200/90 text-left">
-                    <div className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      <Volume2 className="h-3.5 w-3.5 text-blue-500" />
-                      <span>Live Speech Transcript:</span>
+                  <div className="p-3.5 rounded-xl bg-blue-50/90 border border-blue-200/90 text-left space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
+                        <Volume2 className="h-3.5 w-3.5 text-blue-500" />
+                        <span>Live Speech Transcript:</span>
+                      </div>
+                      {liveTranscript && (
+                        <button
+                          type="button"
+                          onClick={() => onSelectExample?.(liveTranscript)}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                        >
+                          Apply Command →
+                        </button>
+                      )}
                     </div>
                     <p className="text-sm md:text-base font-bold text-slate-900 min-h-[24px]">
                       {liveTranscript ? `“${liveTranscript}”` : (
@@ -172,7 +183,7 @@ export function VoiceInteractionCard({
                   {/* Quick test clickable prompts */}
                   <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-slate-100">
                     <span className="text-[11px] font-medium text-slate-400">
-                      Or click to simulate speech:
+                      Or tap to test command:
                     </span>
                     <button
                       type="button"
@@ -187,6 +198,20 @@ export function VoiceInteractionCard({
                       className="text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg px-2.5 py-1 transition cursor-pointer"
                     >
                       &ldquo;Update rice count to 50&rdquo;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onSelectExample?.('2 kg sugar left')}
+                      className="text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg px-2.5 py-1 transition cursor-pointer"
+                    >
+                      &ldquo;2 kg sugar left&rdquo;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onSelectExample?.('Restock all')}
+                      className="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg px-2.5 py-1 transition cursor-pointer"
+                    >
+                      &ldquo;Restock all&rdquo;
                     </button>
                   </div>
                 </div>
@@ -216,13 +241,21 @@ export function VoiceInteractionCard({
                           &ldquo;Sold 5 packets of milk&rdquo;
                         </button>
                       </div>
-                      <div className="text-slate-600">
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                         <button
                           type="button"
                           onClick={() => onSelectExample?.('2 kg sugar left')}
-                          className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
+                          className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline text-slate-600"
                         >
                           &ldquo;2 kg sugar left&rdquo;
+                        </button>
+                        <span className="text-slate-300 font-normal hidden sm:inline">|</span>
+                        <button
+                          type="button"
+                          onClick={() => onSelectExample?.('Restock all')}
+                          className="text-emerald-600 hover:text-emerald-700 font-semibold cursor-pointer hover:underline text-left"
+                        >
+                          &ldquo;Restock all&rdquo;
                         </button>
                       </div>
                     </div>

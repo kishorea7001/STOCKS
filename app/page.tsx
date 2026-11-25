@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { NavItemKey } from '@/components/layout/Sidebar';
@@ -58,38 +58,88 @@ function extractQuantity(text: string): number | null {
   return null;
 }
 
-function findMatchingProduct(text: string, productList: ProductItem[]): ProductItem | undefined {
-  const lower = text.toLowerCase();
+/**
+ * Text-to-speech audio feedback to confirm voice commands
+ */
+function speakFeedback(text: string) {
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      utterance.pitch = 1.0;
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // Audio playback error ignored safely
+    }
+  }
+}
 
-  // 1. Direct name substring
+function findMatchingProduct(text: string, productList: ProductItem[]): ProductItem | undefined {
+  const lower = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+
+  // 1. Direct name match
   for (const p of productList) {
     if (lower.includes(p.name.toLowerCase())) return p;
   }
 
-  // 2. Keyword dictionary mapping
-  const keywords: Record<string, string[]> = {
-    '1': ['rice', 'basmati'],
-    '2': ['sugar', 'cheeni'],
-    '3': ['oil', 'cooking oil', 'sunflower'],
-    '4': ['milk', 'doodh', 'toned milk'],
-    '5': ['tea', 'chai', 'tea powder'],
-    '6': ['soap', 'bathing soap'],
-    '7': ['biscuit', 'biscuits', 'marie'],
-    '8': ['dal', 'toor', 'toor dal', 'pulses', 'lentil', 'lentils'],
-    '9': ['wheat', 'atta', 'flour'],
-    '10': ['detergent', 'washing powder', 'surf'],
-  };
+  // 2. Keyword mapping dictionary
+  const map: { keywords: string[]; match: (p: ProductItem) => boolean }[] = [
+    {
+      keywords: ['rice', 'basmati', 'chawal'],
+      match: (p) => p.name.toLowerCase().includes('rice') || p.id === '1',
+    },
+    {
+      keywords: ['sugar', 'cheeni', 'shakar', 'sweet'],
+      match: (p) => p.name.toLowerCase().includes('sugar') || p.id === '2',
+    },
+    {
+      keywords: ['oil', 'cooking oil', 'sunflower', 'tel'],
+      match: (p) => p.name.toLowerCase().includes('oil') || p.id === '3',
+    },
+    {
+      keywords: ['milk', 'doodh', 'toned milk', 'dairy'],
+      match: (p) => p.name.toLowerCase().includes('milk') || p.id === '4',
+    },
+    {
+      keywords: ['tea', 'chai', 'tea powder', 'patti'],
+      match: (p) => p.name.toLowerCase().includes('tea') || p.id === '5',
+    },
+    {
+      keywords: ['soap', 'bathing soap', 'sabun', 'bath soap'],
+      match: (p) => p.name.toLowerCase().includes('soap') || p.id === '6',
+    },
+    {
+      keywords: ['biscuit', 'biscuits', 'marie', 'cookie', 'cookies'],
+      match: (p) => p.name.toLowerCase().includes('biscuit') || p.id === '7',
+    },
+    {
+      keywords: ['dal', 'toor', 'toor dal', 'pulses', 'lentil', 'lentils', 'arhar'],
+      match: (p) => p.name.toLowerCase().includes('dal') || p.id === '8',
+    },
+    {
+      keywords: ['wheat', 'atta', 'flour', 'gehun'],
+      match: (p) => p.name.toLowerCase().includes('wheat') || p.name.toLowerCase().includes('atta') || p.id === '9',
+    },
+    {
+      keywords: ['detergent', 'washing powder', 'surf', 'washing detergent', 'powder'],
+      match: (p) => p.name.toLowerCase().includes('detergent') || p.id === '10',
+    },
+  ];
 
-  for (const [id, keys] of Object.entries(keywords)) {
-    if (keys.some((k) => lower.includes(k))) {
-      return productList.find((p) => p.id === id);
+  for (const entry of map) {
+    if (entry.keywords.some((kw) => lower.split(/\s+/).includes(kw) || lower.includes(kw))) {
+      const found = productList.find(entry.match);
+      if (found) return found;
     }
   }
 
   // 3. Sub-word match
+  const tokens = lower.split(/\s+/);
   for (const p of productList) {
-    const parts = p.name.toLowerCase().split(/\s+/);
-    if (parts.some((part) => part.length >= 4 && lower.includes(part))) {
+    const pTokens = p.name.toLowerCase().split(/\s+/);
+    if (tokens.some((t) => t.length >= 4 && pTokens.some((pt) => pt.includes(t) || t.includes(pt)))) {
       return p;
     }
   }
@@ -111,6 +161,9 @@ export default function TalkStockApp() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const latestTranscriptRef = useRef<string>('');
+  const hasExecutedRef = useRef<boolean>(false);
 
   const showToast = useCallback((text: string, type: 'success' | 'info' | 'alert' = 'success') => {
     setToastMessage({ text, type });
@@ -120,7 +173,7 @@ export default function TalkStockApp() {
   }, []);
 
   // Quick Action 1: Reset Demo (Restores static initial baseline)
-  const handleResetDemo = () => {
+  const handleResetDemo = useCallback(() => {
     setLoadingReset(true);
     setTimeout(() => {
       setProducts(INITIAL_PRODUCTS);
@@ -128,18 +181,19 @@ export default function TalkStockApp() {
       setSpeechError(null);
       setLiveTranscript('');
       setLoadingReset(false);
+      speakFeedback('Inventory data reset to initial baseline.');
       showToast('Demo inventory data reset to initial 10 products (401 total units, 2 alerts)!', 'success');
     }, 350);
-  };
+  }, [showToast]);
 
   // Quick Action 2: Refresh (Purely refreshes the current view statically)
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setLoadingRefresh(true);
     setTimeout(() => {
       setLoadingRefresh(false);
       showToast('Dashboard refreshed with latest stock values!', 'info');
     }, 300);
-  };
+  }, [showToast]);
 
   // Quick Action 3: Settings
   const handleOpenSettings = () => {
@@ -154,19 +208,21 @@ export default function TalkStockApp() {
     const lower = raw.toLowerCase();
 
     // 1. Reset command
-    if (lower.includes('reset') && (lower.includes('demo') || lower.includes('inventory') || lower.includes('data'))) {
+    if (lower.includes('reset') && (lower.includes('demo') || lower.includes('inventory') || lower.includes('data') || lower.includes('stock'))) {
       handleResetDemo();
       return;
     }
 
     // 2. Restock all command
-    if (lower.includes('restock all') || lower.includes('replenish all') || lower.includes('stock all')) {
+    if (lower.includes('restock all') || lower.includes('replenish all') || lower.includes('stock all') || lower.includes('sab restock')) {
       setProducts((prev) =>
         prev.map((item) =>
           item.currentStock <= 20 ? { ...item, currentStock: item.currentStock + 25 } : item
         )
       );
-      setSpeechFeedback('Restocked all low inventory items above minimum threshold.');
+      const msg = 'Restocked all low inventory items above minimum threshold.';
+      setSpeechFeedback(msg);
+      speakFeedback(msg);
       showToast('Voice update: All low stock items restocked successfully!', 'success');
       return;
     }
@@ -175,7 +231,7 @@ export default function TalkStockApp() {
     const targetProduct = findMatchingProduct(raw, products);
 
     if (!targetProduct) {
-      setSpeechFeedback(`Recognized speech: "${raw}" (No matching product found)`);
+      setSpeechFeedback(`Recognized: "${raw}" (No matching product)`);
       showToast(`Heard: "${raw}". Mention products like rice, milk, sugar, oil, or tea.`, 'alert');
       return;
     }
@@ -186,10 +242,15 @@ export default function TalkStockApp() {
     if (
       lower.includes('sold') ||
       lower.includes('sell') ||
+      lower.includes('sale') ||
       lower.includes('minus') ||
       lower.includes('deduct') ||
       lower.includes('remove') ||
-      lower.includes('subtract')
+      lower.includes('subtract') ||
+      lower.includes('bik gaya') ||
+      lower.includes('becha') ||
+      lower.includes('reduce') ||
+      lower.includes('less')
     ) {
       const deduction = qty !== null ? qty : 5;
       const newStock = Math.max(0, targetProduct.currentStock - deduction);
@@ -198,6 +259,7 @@ export default function TalkStockApp() {
       );
       const msg = `Sold ${deduction} ${targetProduct.unit} of ${targetProduct.name}. New count: ${newStock} ${targetProduct.unit}.`;
       setSpeechFeedback(msg);
+      speakFeedback(msg);
       showToast(msg, 'success');
       return;
     }
@@ -207,8 +269,13 @@ export default function TalkStockApp() {
       lower.includes('add') ||
       lower.includes('restock') ||
       lower.includes('bought') ||
+      lower.includes('buy') ||
       lower.includes('plus') ||
-      lower.includes('received')
+      lower.includes('received') ||
+      lower.includes('receive') ||
+      lower.includes('purchase') ||
+      lower.includes('aaya') ||
+      lower.includes('replenish')
     ) {
       const addition = qty !== null ? qty : 20;
       const newStock = targetProduct.currentStock + addition;
@@ -217,6 +284,7 @@ export default function TalkStockApp() {
       );
       const msg = `Restocked +${addition} ${targetProduct.unit} of ${targetProduct.name}. New count: ${newStock} ${targetProduct.unit}.`;
       setSpeechFeedback(msg);
+      speakFeedback(msg);
       showToast(msg, 'success');
       return;
     }
@@ -228,12 +296,20 @@ export default function TalkStockApp() {
     );
     const msg = `Updated ${targetProduct.name} stock count to ${targetQty} ${targetProduct.unit}.`;
     setSpeechFeedback(msg);
+    speakFeedback(msg);
     showToast(msg, 'success');
-  }, [products, showToast]);
+  }, [products, handleResetDemo, showToast]);
 
-  // Real Microphone Toggle using Web Speech API
+  // Keep a ref to the latest executeCommand function to avoid stale closures in event listeners
+  const executeCommandRef = useRef(executeCommand);
+  useEffect(() => {
+    executeCommandRef.current = executeCommand;
+  }, [executeCommand]);
+
+  // Real Microphone Toggle using Web Speech API with auto-silence timeout & reliable fallback
   const handleToggleVoice = () => {
     if (isListening) {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -241,8 +317,13 @@ export default function TalkStockApp() {
           // ignore
         }
       }
+      // If user had spoken something, execute it upon manual stop
+      if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
+        hasExecutedRef.current = true;
+        executeCommandRef.current(latestTranscriptRef.current.trim());
+      }
       setIsListening(false);
-      showToast('Microphone deactivated.', 'info');
+      showToast('Microphone closed.', 'info');
       return;
     }
 
@@ -253,7 +334,7 @@ export default function TalkStockApp() {
       : null;
 
     if (!SpeechRecognition) {
-      setSpeechError('Web Speech API is not supported in this browser. You can click sample commands or use the text input.');
+      setSpeechError('Web Speech API is not supported in this browser. Please use Chrome/Edge or click the sample command chips.');
       showToast('Speech Recognition not supported in this browser.', 'alert');
       return;
     }
@@ -262,8 +343,11 @@ export default function TalkStockApp() {
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
       recognition.interimResults = true;
-      recognition.continuous = false;
+      recognition.continuous = true; // Prevents abrupt cutoffs
       recognition.maxAlternatives = 1;
+
+      latestTranscriptRef.current = '';
+      hasExecutedRef.current = false;
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -277,7 +361,7 @@ export default function TalkStockApp() {
         let interim = '';
         let final = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = 0; i < event.results.length; ++i) {
           const item = event.results[i];
           if (item.isFinal) {
             final += item[0].transcript;
@@ -286,32 +370,56 @@ export default function TalkStockApp() {
           }
         }
 
-        const spoken = (final || interim).trim();
-        setLiveTranscript(spoken);
+        const currentSpoken = (final || interim).trim();
+        if (currentSpoken) {
+          latestTranscriptRef.current = currentSpoken;
+          setLiveTranscript(currentSpoken);
 
-        if (final) {
-          executeCommand(final.trim());
+          // Clear any previous silence timer
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
+          // Once user pauses for 1.6 seconds after speaking, auto-execute the command!
+          silenceTimerRef.current = setTimeout(() => {
+            if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
+              hasExecutedRef.current = true;
+              executeCommandRef.current(latestTranscriptRef.current.trim());
+              try {
+                recognition.stop();
+              } catch {
+                // ignore
+              }
+              setIsListening(false);
+            }
+          }, 1600);
         }
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
-        setIsListening(false);
+        console.warn('Speech recognition error:', event.error);
         if (event.error === 'not-allowed') {
-          const msg = 'Microphone permission denied. Click the lock icon in your address bar to allow microphone access.';
+          const msg = 'Microphone permission denied. Click the lock icon in your browser address bar to allow microphone access.';
           setSpeechError(msg);
           showToast(msg, 'alert');
+          setIsListening(false);
         } else if (event.error === 'no-speech') {
-          showToast('No speech detected. Please speak closer to your microphone.', 'info');
+          // Do not cancel immediately on background silence
         } else if (event.error === 'network') {
-          setSpeechError('Speech recognition service offline or network blocked.');
-          showToast('Speech network error. You can click sample commands below.', 'alert');
+          setSpeechError('Google Speech Recognition network blocked. You can click sample commands or use the text input below.');
+          showToast('Speech network error. You can click sample commands.', 'alert');
+          setIsListening(false);
         } else {
-          setSpeechError(`Speech recognition error: ${event.error}`);
+          setSpeechError(`Voice error: ${event.error}`);
         }
       };
 
       recognition.onend = () => {
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        // If a speech string was captured and not yet executed, execute it now
+        if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
+          hasExecutedRef.current = true;
+          executeCommandRef.current(latestTranscriptRef.current.trim());
+        }
         setIsListening(false);
       };
 
@@ -325,9 +433,17 @@ export default function TalkStockApp() {
     }
   };
 
-  // Example Prompt Click
+  // Example Prompt Click (Directly simulates and speaks the command)
   const handleSelectExample = (command: string) => {
     setLiveTranscript(command);
+    if (isListening && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+      setIsListening(false);
+    }
     executeCommand(command);
   };
 
@@ -352,7 +468,9 @@ export default function TalkStockApp() {
           : item
       )
     );
-    showToast('All low stock items have been successfully restocked! Alerts cleared.', 'success');
+    const msg = 'All low stock items have been successfully restocked! Alerts cleared.';
+    speakFeedback(msg);
+    showToast(msg, 'success');
   };
 
   // Calculated Metric Totals
