@@ -187,6 +187,13 @@ export function VoiceInteractionCard({
                     </span>
                     <button
                       type="button"
+                      onClick={() => onSelectExample?.('5kg rice left')}
+                      className="text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg px-2.5 py-1 transition cursor-pointer"
+                    >
+                      &ldquo;5kg rice left&rdquo;
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => onSelectExample?.('Sold 5 packets of milk')}
                       className="text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg px-2.5 py-1 transition cursor-pointer"
                     >
@@ -227,10 +234,10 @@ export function VoiceInteractionCard({
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                         <button
                           type="button"
-                          onClick={() => onSelectExample?.('Update rice count to 50')}
-                          className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
+                          onClick={() => onSelectExample?.('5kg rice left')}
+                          className="hover:text-rose-600 transition-colors text-left cursor-pointer hover:underline text-rose-600 font-semibold"
                         >
-                          &ldquo;Update rice count to 50&rdquo;
+                          &ldquo;5kg rice left&rdquo;
                         </button>
                         <span className="text-slate-300 font-normal hidden sm:inline">|</span>
                         <button
@@ -239,6 +246,14 @@ export function VoiceInteractionCard({
                           className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
                         >
                           &ldquo;Sold 5 packets of milk&rdquo;
+                        </button>
+                        <span className="text-slate-300 font-normal hidden sm:inline">|</span>
+                        <button
+                          type="button"
+                          onClick={() => onSelectExample?.('Update rice count to 50')}
+                          className="hover:text-blue-600 transition-colors text-left cursor-pointer hover:underline"
+                        >
+                          &ldquo;Update rice count to 50&rdquo;
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">

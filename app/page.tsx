@@ -43,10 +43,22 @@ const wordToNum: Record<string, number> = {
 };
 
 function extractQuantity(text: string): number | null {
-  const digitMatch = text.match(/\b\d+(\.\d+)?\b/);
-  if (digitMatch) return parseFloat(digitMatch[0]);
+  const lower = text.toLowerCase();
 
-  const words = text.toLowerCase().split(/[\s-]+/);
+  // 1. Check for "to <number>" (e.g. "update rice count to 50", "set to 20")
+  const toMatch = lower.match(/(?:to|set to)\s*(\d+(?:\.\d+)?)/);
+  if (toMatch) {
+    return parseFloat(toMatch[1]);
+  }
+
+  // 2. Direct number anywhere (e.g. "5kg", "5 kg", "50", "2.5")
+  const match = text.match(/\d+(?:\.\d+)?/);
+  if (match) {
+    return parseFloat(match[0]);
+  }
+
+  // 3. English word numbers ("five", "ten", etc.)
+  const words = lower.split(/[\s-]+/);
   for (let i = 0; i < words.length; i++) {
     const w = words[i];
     if (wordToNum[w] !== undefined) {
@@ -246,33 +258,27 @@ export default function TalkStockApp() {
 
     const qty = extractQuantity(raw);
 
-    // DEDUCT / SELL ACTION
+    // 1. SET / UPDATE EXACT COUNT ACTION (explicit set/update keywords)
     if (
-      lower.includes('sold') ||
-      lower.includes('sell') ||
-      lower.includes('sale') ||
-      lower.includes('minus') ||
-      lower.includes('deduct') ||
-      lower.includes('remove') ||
-      lower.includes('subtract') ||
-      lower.includes('bik gaya') ||
-      lower.includes('becha') ||
-      lower.includes('reduce') ||
-      lower.includes('less')
+      lower.includes('update') ||
+      lower.includes('set to') ||
+      lower.includes('count to') ||
+      lower.includes('change to') ||
+      lower.includes('make it') ||
+      lower.includes('set ')
     ) {
-      const deduction = qty !== null ? qty : 5;
-      const newStock = Math.max(0, targetProduct.currentStock - deduction);
+      const targetQty = qty !== null ? qty : targetProduct.currentStock;
       setProducts((prev) =>
-        prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: newStock } : p))
+        prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: targetQty } : p))
       );
-      const msg = `Sold ${deduction} ${targetProduct.unit} of ${targetProduct.name}. New count: ${newStock} ${targetProduct.unit}.`;
+      const msg = `Updated ${targetProduct.name} stock count to ${targetQty} ${targetProduct.unit}.`;
       setSpeechFeedback(msg);
       speakFeedback(msg);
       showToast(msg, 'success');
       return;
     }
 
-    // ADD / RESTOCK ACTION
+    // 2. ADD / RESTOCK ACTION
     if (
       lower.includes('add') ||
       lower.includes('restock') ||
@@ -297,15 +303,46 @@ export default function TalkStockApp() {
       return;
     }
 
-    // SET / UPDATE / LEFTOVER COUNT ACTION
-    const targetQty = qty !== null ? qty : targetProduct.currentStock;
-    setProducts((prev) =>
-      prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: targetQty } : p))
-    );
-    const msg = `Updated ${targetProduct.name} stock count to ${targetQty} ${targetProduct.unit}.`;
-    setSpeechFeedback(msg);
-    speakFeedback(msg);
-    showToast(msg, 'success');
+    // 3. DEDUCT / SUBTRACT / SELL / LEFT ACTION (e.g. "5kg rice left", "sold 5 milk", "deduct 5")
+    if (
+      lower.includes('left') ||
+      lower.includes('sold') ||
+      lower.includes('sell') ||
+      lower.includes('sale') ||
+      lower.includes('minus') ||
+      lower.includes('deduct') ||
+      lower.includes('remove') ||
+      lower.includes('subtract') ||
+      lower.includes('bik gaya') ||
+      lower.includes('becha') ||
+      lower.includes('reduce') ||
+      lower.includes('less') ||
+      lower.includes('used') ||
+      lower.includes('taken')
+    ) {
+      const deduction = qty !== null ? qty : 5;
+      const newStock = Math.max(0, targetProduct.currentStock - deduction);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: newStock } : p))
+      );
+      const msg = `Subtracted ${deduction} ${targetProduct.unit} from ${targetProduct.name}. New stock: ${newStock} ${targetProduct.unit}.`;
+      setSpeechFeedback(msg);
+      speakFeedback(msg);
+      showToast(msg, 'success');
+      return;
+    }
+
+    // 4. Fallback: if a number was mentioned without a specific verb (e.g. "rice 45")
+    if (qty !== null) {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === targetProduct.id ? { ...p, currentStock: qty } : p))
+      );
+      const msg = `Updated ${targetProduct.name} stock count to ${qty} ${targetProduct.unit}.`;
+      setSpeechFeedback(msg);
+      speakFeedback(msg);
+      showToast(msg, 'success');
+      return;
+    }
   }, [products, handleResetDemo, showToast]);
 
   // Keep a ref to the latest executeCommand function to avoid stale closures in event listeners

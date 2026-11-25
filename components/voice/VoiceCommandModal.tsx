@@ -53,6 +53,7 @@ export function VoiceCommandModal({
   };
 
   const sampleCommands = [
+    { label: '5kg rice left', category: 'Deduct' },
     { label: 'Sold 5 packets of milk', category: 'Sale' },
     { label: 'Update rice count to 50', category: 'Update' },
     { label: '2 kg sugar left', category: 'Stock' },
