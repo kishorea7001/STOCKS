@@ -10,6 +10,7 @@ import { LeftoverStockView } from '@/components/views/LeftoverStockView';
 import { AlertsView } from '@/components/views/AlertsView';
 import { SettingsView } from '@/components/views/SettingsView';
 import { AboutView } from '@/components/views/AboutView';
+import { VoiceCommandModal } from '@/components/voice/VoiceCommandModal';
 import { CheckCircle2, AlertCircle, Volume2 } from 'lucide-react';
 
 /**
@@ -59,7 +60,7 @@ function extractQuantity(text: string): number | null {
 }
 
 /**
- * Text-to-speech audio feedback to confirm voice commands
+ * Text-to-speech audio feedback to verbally confirm voice commands
  */
 function speakFeedback(text: string) {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -154,6 +155,8 @@ export default function TalkStockApp() {
   const [loadingReset, setLoadingReset] = useState(false);
   const [loadingRefresh, setLoadingRefresh] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [speechFeedback, setSpeechFeedback] = useState<string | null>(null);
   const [speechError, setSpeechError] = useState<string | null>(null);
@@ -164,6 +167,11 @@ export default function TalkStockApp() {
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestTranscriptRef = useRef<string>('');
   const hasExecutedRef = useRef<boolean>(false);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const audioContextRef = useRef<any>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   const showToast = useCallback((text: string, type: 'success' | 'info' | 'alert' = 'success') => {
     setToastMessage({ text, type });
@@ -306,36 +314,97 @@ export default function TalkStockApp() {
     executeCommandRef.current = executeCommand;
   }, [executeCommand]);
 
-  // Real Microphone Toggle using Web Speech API with auto-silence timeout & reliable fallback
-  const handleToggleVoice = () => {
-    if (isListening) {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {
-          // ignore
-        }
-      }
-      // If user had spoken something, execute it upon manual stop
-      if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
-        hasExecutedRef.current = true;
-        executeCommandRef.current(latestTranscriptRef.current.trim());
-      }
-      setIsListening(false);
-      showToast('Microphone closed.', 'info');
-      return;
-    }
+  // Audio capture function for real-time visualizer
+  const startAudioMeter = async () => {
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
 
-    // Access browser SpeechRecognition
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      const audioCtx = new AudioContextClass();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      audioContextRef.current = audioCtx;
+      analyserRef.current = analyser;
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const updateMeter = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / bufferLength;
+        setAudioLevel(Math.min(100, Math.round(avg * 1.5)));
+        animFrameRef.current = requestAnimationFrame(updateMeter);
+      };
+      updateMeter();
+    } catch (err) {
+      console.warn('Audio meter init error:', err);
+    }
+  };
+
+  const stopAudioMeter = () => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch {
+        // ignore
+      }
+      audioContextRef.current = null;
+    }
+    setAudioLevel(0);
+  };
+
+  const stopListening = useCallback(() => {
+    setIsListening(false);
+    stopAudioMeter();
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const startListening = useCallback(() => {
+    stopListening();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognition = typeof window !== 'undefined'
       ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       : null;
 
+    // Start Audio Level Meter
+    startAudioMeter();
+
     if (!SpeechRecognition) {
-      setSpeechError('Web Speech API is not supported in this browser. Please use Chrome/Edge or click the sample command chips.');
-      showToast('Speech Recognition not supported in this browser.', 'alert');
+      setIsListening(true);
+      setSpeechError('Browser speech engine unavailable or blocked. You can tap the sample commands or type below.');
+      showToast('Speech recognition not supported in this browser.', 'alert');
       return;
     }
 
@@ -343,17 +412,17 @@ export default function TalkStockApp() {
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
       recognition.interimResults = true;
-      recognition.continuous = true; // Prevents abrupt cutoffs
+      recognition.continuous = true;
       recognition.maxAlternatives = 1;
 
       latestTranscriptRef.current = '';
       hasExecutedRef.current = false;
+      setLiveTranscript('');
+      setSpeechError(null);
 
       recognition.onstart = () => {
         setIsListening(true);
-        setLiveTranscript('');
-        setSpeechError(null);
-        showToast('Microphone active. Speak your command now...', 'info');
+        showToast('Listening... Speak your inventory command clearly.', 'info');
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -370,27 +439,21 @@ export default function TalkStockApp() {
           }
         }
 
-        const currentSpoken = (final || interim).trim();
-        if (currentSpoken) {
-          latestTranscriptRef.current = currentSpoken;
-          setLiveTranscript(currentSpoken);
+        const phrase = (final || interim).trim();
+        if (phrase) {
+          latestTranscriptRef.current = phrase;
+          setLiveTranscript(phrase);
 
-          // Clear any previous silence timer
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
-          // Once user pauses for 1.6 seconds after speaking, auto-execute the command!
+          // Auto-apply command 1.4s after user finishes speaking
           silenceTimerRef.current = setTimeout(() => {
             if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
               hasExecutedRef.current = true;
               executeCommandRef.current(latestTranscriptRef.current.trim());
-              try {
-                recognition.stop();
-              } catch {
-                // ignore
-              }
-              setIsListening(false);
+              stopListening();
             }
-          }, 1600);
+          }, 1400);
         }
       };
 
@@ -398,52 +461,60 @@ export default function TalkStockApp() {
       recognition.onerror = (event: any) => {
         console.warn('Speech recognition error:', event.error);
         if (event.error === 'not-allowed') {
-          const msg = 'Microphone permission denied. Click the lock icon in your browser address bar to allow microphone access.';
-          setSpeechError(msg);
-          showToast(msg, 'alert');
-          setIsListening(false);
-        } else if (event.error === 'no-speech') {
-          // Do not cancel immediately on background silence
+          setSpeechError('Microphone permission blocked. Click the lock/site settings icon in your browser address bar to allow microphone.');
+          showToast('Microphone blocked. Please grant microphone permission.', 'alert');
+          stopListening();
         } else if (event.error === 'network') {
-          setSpeechError('Google Speech Recognition network blocked. You can click sample commands or use the text input below.');
-          showToast('Speech network error. You can click sample commands.', 'alert');
-          setIsListening(false);
+          setSpeechError('Google speech recognition network service unreachable. You can tap any sample command or use the text box.');
+          showToast('Speech service network error.', 'alert');
+          stopListening();
+        } else if (event.error === 'no-speech') {
+          // Keep listening
         } else {
-          setSpeechError(`Voice error: ${event.error}`);
+          setSpeechError(`Voice notice: ${event.error}`);
         }
       };
 
       recognition.onend = () => {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-        // If a speech string was captured and not yet executed, execute it now
         if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
           hasExecutedRef.current = true;
           executeCommandRef.current(latestTranscriptRef.current.trim());
         }
-        setIsListening(false);
+        stopListening();
       };
 
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err: unknown) {
-      setIsListening(false);
-      const errMsg = err instanceof Error ? err.message : 'Could not access microphone';
+      const errMsg = err instanceof Error ? err.message : 'Microphone start error';
       setSpeechError(errMsg);
       showToast(errMsg, 'alert');
+      stopListening();
+    }
+  }, [stopListening, showToast]);
+
+  // Main Toggle: opens modal and activates microphone
+  const handleToggleVoice = (openModal = true) => {
+    if (openModal) {
+      setIsVoiceModalOpen(true);
+    }
+    if (isListening) {
+      if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
+        hasExecutedRef.current = true;
+        executeCommandRef.current(latestTranscriptRef.current.trim());
+      }
+      stopListening();
+      showToast('Microphone paused.', 'info');
+    } else {
+      startListening();
     }
   };
 
-  // Example Prompt Click (Directly simulates and speaks the command)
+  // Example Prompt Click (Simulates, executes, and speaks response)
   const handleSelectExample = (command: string) => {
     setLiveTranscript(command);
-    if (isListening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-      setIsListening(false);
-    }
+    stopListening();
     executeCommand(command);
   };
 
@@ -485,6 +556,7 @@ export default function TalkStockApp() {
       onSelectItem={setActiveTab}
       alertsCount={lowStockCount}
       isListening={isListening}
+      onOpenVoice={() => handleToggleVoice(true)}
     >
       {activeTab !== 'products' && (
         <AppHeader
@@ -537,6 +609,25 @@ export default function TalkStockApp() {
         </div>
       )}
 
+      {/* Dedicated Interactive Voice Assistant Modal Dialog */}
+      <VoiceCommandModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => {
+          setIsVoiceModalOpen(false);
+          stopListening();
+        }}
+        isListening={isListening}
+        liveTranscript={liveTranscript}
+        speechFeedback={speechFeedback}
+        speechError={speechError}
+        audioLevel={audioLevel}
+        onToggleMic={() => handleToggleVoice(false)}
+        onExecuteCommand={(cmd) => {
+          executeCommand(cmd);
+          stopListening();
+        }}
+      />
+
       {/* View routing based on active sidebar tab */}
       {activeTab === 'home' && (
         <OverviewPlaceholder
@@ -546,13 +637,13 @@ export default function TalkStockApp() {
           onResetDemo={handleResetDemo}
           onRefresh={handleRefresh}
           onOpenSettings={handleOpenSettings}
-          onVoiceCommand={handleToggleVoice}
+          onVoiceCommand={() => handleToggleVoice(true)}
           onViewDetails={() => setActiveTab('products')}
           isListening={isListening}
           liveTranscript={liveTranscript}
           speechFeedback={speechFeedback}
           speechError={speechError}
-          onMicClick={handleToggleVoice}
+          onMicClick={() => handleToggleVoice(true)}
           onSelectExample={handleSelectExample}
           onManualSubmit={executeCommand}
           loadingReset={loadingReset}

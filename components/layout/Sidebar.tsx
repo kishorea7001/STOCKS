@@ -33,6 +33,7 @@ export interface SidebarProps {
   onSelectItem?: (key: NavItemKey) => void;
   alertsCount?: number;
   isListening?: boolean;
+  onOpenVoice?: () => void;
   className?: string;
 }
 
@@ -121,6 +122,7 @@ export function Sidebar({
   onSelectItem,
   alertsCount,
   isListening = false,
+  onOpenVoice,
   className = '',
 }: SidebarProps) {
   const navItems: NavItem[] = [
@@ -230,11 +232,17 @@ export function Sidebar({
       {/* Bottom Area: Voice Status Card & Theme Selector */}
       <div className="p-3.5 space-y-2.5 border-t border-slate-100 bg-white">
         {/* Voice Status Card */}
-        <div className={`rounded-2xl border p-3.5 shadow-xs flex flex-col items-center text-center transition-colors ${
-          isListening
-            ? 'border-blue-300 bg-gradient-to-b from-blue-100/70 via-white to-blue-50'
-            : 'border-blue-100/80 bg-gradient-to-b from-blue-50/50 via-white to-blue-50/30'
-        }`}>
+        <div
+          onClick={onOpenVoice}
+          role="button"
+          tabIndex={0}
+          aria-label="Open Voice Assistant"
+          className={`rounded-2xl border p-3.5 shadow-xs flex flex-col items-center text-center transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${
+            isListening
+              ? 'border-blue-400 bg-gradient-to-b from-blue-100/90 via-white to-blue-50 ring-2 ring-blue-300'
+              : 'border-blue-100/80 bg-gradient-to-b from-blue-50/50 via-white to-blue-50/30 hover:border-blue-300'
+          }`}
+        >
           {/* Microphone Icon in subtle soft blue badge */}
           <div className={`flex h-10 w-10 items-center justify-center rounded-full mb-1.5 shadow-xs border transition-all ${
             isListening

@@ -11,6 +11,7 @@ export interface AppLayoutProps {
   onSelectItem?: (key: NavItemKey) => void;
   alertsCount?: number;
   isListening?: boolean;
+  onOpenVoice?: () => void;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export function AppLayout({
   onSelectItem,
   alertsCount,
   isListening = false,
+  onOpenVoice,
   className = '',
 }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,6 +69,7 @@ export function AppLayout({
             onSelectItem={handleSelectItem}
             alertsCount={alertsCount}
             isListening={isListening}
+            onOpenVoice={onOpenVoice}
           />
         </div>
 
@@ -96,6 +99,7 @@ export function AppLayout({
                 onSelectItem={handleSelectItem}
                 alertsCount={alertsCount}
                 isListening={isListening}
+                onOpenVoice={onOpenVoice}
               />
             </div>
           </div>
