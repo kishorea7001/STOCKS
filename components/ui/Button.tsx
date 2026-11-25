@@ -33,17 +33,17 @@ export function Button({
     primary:
       'bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/25 border border-transparent rounded-xl md:rounded-2xl',
     secondary:
-      'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 shadow-xs rounded-xl md:rounded-2xl',
+      'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-xs rounded-xl md:rounded-2xl',
     'soft-blue':
-      'bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 border border-blue-100 rounded-xl md:rounded-2xl',
+      'bg-blue-50/80 dark:bg-blue-950/50 hover:bg-blue-100/80 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900 rounded-xl md:rounded-2xl',
     'soft-green':
-      'bg-emerald-50/80 hover:bg-emerald-100/80 text-emerald-700 border border-emerald-100 rounded-xl md:rounded-2xl',
+      'bg-emerald-50/80 dark:bg-emerald-950/50 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900 rounded-xl md:rounded-2xl',
     'soft-purple':
-      'bg-purple-50/80 hover:bg-purple-100/80 text-purple-700 border border-purple-100 rounded-xl md:rounded-2xl',
+      'bg-purple-50/80 dark:bg-purple-950/50 hover:bg-purple-100/80 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-900 rounded-xl md:rounded-2xl',
     'soft-yellow':
-      'bg-amber-50/80 hover:bg-amber-100/80 text-amber-800 border border-amber-100 rounded-xl md:rounded-2xl',
+      'bg-amber-50/80 dark:bg-amber-950/50 hover:bg-amber-100/80 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-100 dark:border-amber-900 rounded-xl md:rounded-2xl',
     ghost:
-      'bg-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900 rounded-xl',
+      'bg-transparent hover:bg-slate-100/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl',
   };
 
   const sizeStyles = {

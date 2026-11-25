@@ -114,10 +114,10 @@ export function ProductsView({
       {/* 1. Header with Title, Subtitle, and Prominent Add Product Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
-          <h2 className="text-3xl md:text-[32px] lg:text-[34px] font-bold text-[#0F172A] tracking-tight leading-tight">
+          <h2 className="text-3xl md:text-[32px] lg:text-[34px] font-bold text-[#0F172A] dark:text-white tracking-tight leading-tight">
             Products
           </h2>
-          <p className="text-sm md:text-[15px] text-slate-500 font-normal mt-1.5">
+          <p className="text-sm md:text-[15px] text-slate-500 dark:text-slate-400 font-normal mt-1.5">
             Manage your inventory and product quantities.
           </p>
         </div>
@@ -137,45 +137,45 @@ export function ProductsView({
       {/* 2. Overview Metric Cards Row (Blue / Green / Purple / Rose System) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Total Products */}
-        <div className="rounded-2xl border border-blue-100/90 bg-gradient-to-br from-blue-50/80 via-white to-blue-50/40 p-5 shadow-xs">
+        <div className="rounded-2xl border border-blue-100/90 dark:border-blue-900/50 bg-gradient-to-br from-blue-50/80 via-white to-blue-50/40 dark:from-slate-900/90 dark:via-blue-950/30 dark:to-slate-900/90 p-5 shadow-xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-700">Total Products</span>
-            <Boxes className="h-4 w-4 text-blue-600" />
+            <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Total Products</span>
+            <Boxes className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-2">
+          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mt-2">
             {safeProducts.length}
           </p>
         </div>
 
         {/* In Stock */}
-        <div className="rounded-2xl border border-emerald-100/90 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40 p-5 shadow-xs">
+        <div className="rounded-2xl border border-emerald-100/90 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40 dark:from-slate-900/90 dark:via-emerald-950/30 dark:to-slate-900/90 p-5 shadow-xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-700">In Stock</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">In Stock</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-2">
+          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mt-2">
             {inStockCount}
           </p>
         </div>
 
         {/* Low Stock */}
-        <div className="rounded-2xl border border-amber-100/90 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 p-5 shadow-xs">
+        <div className="rounded-2xl border border-amber-100/90 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40 dark:from-slate-900/90 dark:via-amber-950/30 dark:to-slate-900/90 p-5 shadow-xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-800">Low Stock</span>
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <span className="text-xs font-semibold text-amber-800 dark:text-amber-400">Low Stock</span>
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-2">
+          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mt-2">
             {lowStockCount}
           </p>
         </div>
 
         {/* Out of Stock */}
-        <div className="rounded-2xl border border-rose-100/90 bg-gradient-to-br from-rose-50/80 via-white to-rose-50/40 p-5 shadow-xs">
+        <div className="rounded-2xl border border-rose-100/90 dark:border-rose-900/50 bg-gradient-to-br from-rose-50/80 via-white to-rose-50/40 dark:from-slate-900/90 dark:via-rose-950/30 dark:to-slate-900/90 p-5 shadow-xs transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-700">Out of Stock</span>
-            <XCircle className="h-4 w-4 text-rose-600" />
+            <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Out of Stock</span>
+            <XCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-2">
+          <p className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mt-2">
             {outOfStockCount}
           </p>
         </div>
@@ -191,7 +191,7 @@ export function ProductsView({
             placeholder="Search products by name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs"
+            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs"
           />
         </div>
 
@@ -205,7 +205,7 @@ export function ProductsView({
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 selectedCat === cat
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200/70 hover:bg-slate-50'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750'
               }`}
             >
               {cat}
@@ -247,7 +247,7 @@ export function ProductsView({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm select-none">
               <thead>
-                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-400">
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-400 dark:text-slate-500">
                   <th className="pb-3.5 px-3">Product Name</th>
                   <th className="pb-3.5 px-3">Category</th>
                   <th className="pb-3.5 px-3">Current Quantity</th>
@@ -255,7 +255,7 @@ export function ProductsView({
                   <th className="pb-3.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filtered.map((item) => {
                   const isOut = item.currentStock <= 0;
                   const isLow = item.currentStock > 0 && item.currentStock <= 20;
@@ -263,19 +263,19 @@ export function ProductsView({
                   return (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50/80 transition-colors group"
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group"
                     >
                       {/* Product Name */}
                       <td className="py-4 px-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold text-xs shrink-0">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs shrink-0">
                             {item.name.charAt(0)}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 leading-tight">
+                            <p className="font-bold text-slate-900 dark:text-white leading-tight">
                               {item.name}
                             </p>
-                            <p className="text-xs text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                               ₹{item.pricePerUnit.toFixed(2)} per {item.unit}
                             </p>
                           </div>
@@ -283,16 +283,16 @@ export function ProductsView({
                       </td>
 
                       {/* Category */}
-                      <td className="py-4 px-3 text-slate-500 font-medium text-xs">
+                      <td className="py-4 px-3 text-slate-500 dark:text-slate-400 font-medium text-xs">
                         {item.category}
                       </td>
 
                       {/* Current Quantity */}
                       <td className="py-4 px-3">
-                        <span className="text-base font-extrabold text-slate-900">
+                        <span className="text-base font-extrabold text-slate-900 dark:text-white">
                           {item.currentStock}
                         </span>{' '}
-                        <span className="text-xs font-semibold text-slate-400">
+                        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
                           {item.unit}
                         </span>
                       </td>
@@ -320,7 +320,7 @@ export function ProductsView({
                           <button
                             type="button"
                             onClick={() => onAdjustStock?.(item.id, -1)}
-                            className="h-8 w-8 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-xs"
+                            className="h-8 w-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-xs"
                             title="Decrease quantity by 1"
                           >
                             -
@@ -328,7 +328,7 @@ export function ProductsView({
                           <button
                             type="button"
                             onClick={() => onAdjustStock?.(item.id, 1)}
-                            className="h-8 w-8 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-xs"
+                            className="h-8 w-8 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-xs"
                             title="Increase quantity by 1"
                           >
                             +
@@ -347,18 +347,18 @@ export function ProductsView({
       {/* 5. Add Product Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl bg-white border border-slate-100 shadow-2xl p-6 md:p-7 space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl p-6 md:p-7 space-y-5 animate-in zoom-in-95 duration-200 transition-colors">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                   <Package className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Add New Product</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add New Product</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="h-8 w-8 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer"
+                className="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white flex items-center justify-center cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -366,7 +366,7 @@ export function ProductsView({
 
             <form onSubmit={handleCreateProduct} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Product Name
                 </label>
                 <input
@@ -375,19 +375,19 @@ export function ProductsView({
                   placeholder="e.g. Green Cardamom, Almonds"
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Category
                   </label>
                   <select
                     value={newProductCategory}
                     onChange={(e) => setNewProductCategory(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-800"
                   >
                     <option value="Grains & Staples">Grains & Staples</option>
                     <option value="Dairy">Dairy</option>
@@ -401,13 +401,13 @@ export function ProductsView({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Unit
                   </label>
                   <select
                     value={newProductUnit}
                     onChange={(e) => setNewProductUnit(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-800"
                   >
                     <option value="kg">kg</option>
                     <option value="packets">packets</option>
@@ -420,7 +420,7 @@ export function ProductsView({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Initial Quantity
                   </label>
                   <input
@@ -429,12 +429,12 @@ export function ProductsView({
                     step="any"
                     value={newProductStock}
                     onChange={(e) => setNewProductStock(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Price per Unit (₹)
                   </label>
                   <input
@@ -443,12 +443,12 @@ export function ProductsView({
                     step="any"
                     value={newProductPrice}
                     onChange={(e) => setNewProductPrice(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2.5">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
                 <Button
                   type="button"
                   variant="secondary"

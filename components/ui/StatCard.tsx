@@ -22,22 +22,22 @@ export function StatCard({
 }: StatCardProps) {
   const variantStyles = {
     blue: {
-      card: 'bg-gradient-to-br from-blue-50/90 via-sky-50/50 to-white/95 border-blue-200/80 shadow-[0_4px_24px_rgba(37,99,235,0.06)] hover:border-blue-300 hover:shadow-[0_8px_30px_rgba(37,99,235,0.12)]',
-      iconWrapper: 'bg-blue-100/70 text-blue-600 border border-blue-200/60 shadow-xs',
-      text: 'text-slate-600',
-      link: 'text-blue-600 hover:text-blue-700',
+      card: 'bg-gradient-to-br from-blue-50/90 via-sky-50/50 to-white/95 dark:from-slate-900/90 dark:via-blue-950/30 dark:to-slate-900/90 border-blue-200/80 dark:border-blue-900/50 shadow-[0_4px_24px_rgba(37,99,235,0.06)] dark:shadow-none hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-[0_8px_30px_rgba(37,99,235,0.12)]',
+      iconWrapper: 'bg-blue-100/70 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 shadow-xs',
+      text: 'text-slate-600 dark:text-slate-400',
+      link: 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300',
     },
     green: {
-      card: 'bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white/95 border-emerald-200/80 shadow-[0_4px_24px_rgba(16,185,129,0.06)] hover:border-emerald-300 hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)]',
-      iconWrapper: 'bg-emerald-100/70 text-emerald-600 border border-emerald-200/60 shadow-xs',
-      text: 'text-slate-600',
-      link: 'text-emerald-700 hover:text-emerald-800',
+      card: 'bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white/95 dark:from-slate-900/90 dark:via-emerald-950/30 dark:to-slate-900/90 border-emerald-200/80 dark:border-emerald-900/50 shadow-[0_4px_24px_rgba(16,185,129,0.06)] dark:shadow-none hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)]',
+      iconWrapper: 'bg-emerald-100/70 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs',
+      text: 'text-slate-600 dark:text-slate-400',
+      link: 'text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300',
     },
     purple: {
-      card: 'bg-gradient-to-br from-purple-50/90 via-violet-50/50 to-white/95 border-purple-200/80 shadow-[0_4px_24px_rgba(139,92,246,0.06)] hover:border-purple-300 hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]',
-      iconWrapper: 'bg-purple-100/70 text-purple-600 border border-purple-200/60 shadow-xs',
-      text: 'text-slate-600',
-      link: 'text-purple-600 hover:text-purple-700',
+      card: 'bg-gradient-to-br from-purple-50/90 via-violet-50/50 to-white/95 dark:from-slate-900/90 dark:via-purple-950/30 dark:to-slate-900/90 border-purple-200/80 dark:border-purple-900/50 shadow-[0_4px_24px_rgba(139,92,246,0.06)] dark:shadow-none hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]',
+      iconWrapper: 'bg-purple-100/70 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-800/60 shadow-xs',
+      text: 'text-slate-600 dark:text-slate-400',
+      link: 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300',
     },
   };
 
@@ -58,7 +58,7 @@ export function StatCard({
 
       {/* Bottom: Large Number and Title / Action */}
       <div className="mt-5 space-y-1">
-        <p className="text-4xl md:text-5xl font-extrabold text-[#0F172A] tracking-tight leading-none">
+        <p className="text-4xl md:text-5xl font-extrabold text-[#0F172A] dark:text-white tracking-tight leading-none">
           {number}
         </p>
 

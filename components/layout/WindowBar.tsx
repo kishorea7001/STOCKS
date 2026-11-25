@@ -20,7 +20,7 @@ export function WindowBar({
 }: WindowBarProps) {
   return (
     <header
-      className={`h-9 w-full bg-slate-900 text-slate-300 flex items-center justify-between px-3 select-none text-xs border-b border-slate-800/80 z-30 shrink-0 ${className}`}
+      className={`h-9 w-full bg-slate-900 dark:bg-slate-950 text-slate-300 flex items-center justify-between px-3 select-none text-xs border-b border-slate-800/80 dark:border-slate-850 z-30 shrink-0 transition-colors ${className}`}
     >
       {/* Left: App Identity */}
       <div className="flex items-center gap-2">

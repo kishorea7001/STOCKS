@@ -20,18 +20,18 @@ export function QuickActionTile({
   const variantStyles = {
     blue: {
       button:
-        'bg-[#EFF6FF] border-blue-200/80 text-blue-600 hover:bg-blue-100/70 hover:border-blue-300 hover:shadow-[0_8px_20px_rgba(37,99,235,0.12)]',
-      text: 'text-blue-600',
+        'bg-[#EFF6FF] dark:bg-blue-950/40 border-blue-200/80 dark:border-blue-900/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/50 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-[0_8px_20px_rgba(37,99,235,0.12)]',
+      text: 'text-blue-600 dark:text-blue-400',
     },
     green: {
       button:
-        'bg-[#ECFDF5] border-emerald-200/80 text-emerald-600 hover:bg-emerald-100/70 hover:border-emerald-300 hover:shadow-[0_8px_20px_rgba(16,185,129,0.12)]',
-      text: 'text-emerald-600',
+        'bg-[#ECFDF5] dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-[0_8px_20px_rgba(16,185,129,0.12)]',
+      text: 'text-emerald-600 dark:text-emerald-400',
     },
     purple: {
       button:
-        'bg-[#F5F3FF] border-purple-200/80 text-purple-600 hover:bg-purple-100/70 hover:border-purple-300 hover:shadow-[0_8px_20px_rgba(139,92,246,0.12)]',
-      text: 'text-purple-600',
+        'bg-[#F5F3FF] dark:bg-purple-950/40 border-purple-200/80 dark:border-purple-900/60 text-purple-600 dark:text-purple-400 hover:bg-purple-100/70 dark:hover:bg-purple-900/50 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-[0_8px_20px_rgba(139,92,246,0.12)]',
+      text: 'text-purple-600 dark:text-purple-400',
     },
   };
 

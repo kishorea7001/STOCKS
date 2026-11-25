@@ -9,9 +9,10 @@ import {
   Settings,
   Info,
   Sun,
-  ChevronDown,
+  Moon,
   Mic,
 } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 export type NavItemKey =
   | 'home'
@@ -125,6 +126,8 @@ export function Sidebar({
   onOpenVoice,
   className = '',
 }: SidebarProps) {
+  const { isDark, toggleTheme } = useTheme();
+
   const navItems: NavItem[] = [
     {
       key: 'home',
@@ -161,7 +164,7 @@ export function Sidebar({
 
   return (
     <aside
-      className={`w-[220px] shrink-0 bg-white border-r border-slate-200/70 flex flex-col justify-between h-full select-none z-20 ${className}`}
+      className={`w-[220px] shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200/70 dark:border-slate-800 flex flex-col justify-between h-full select-none z-20 transition-colors duration-200 ${className}`}
     >
       {/* Top Branding & Navigation */}
       <div className="pt-6 pb-2 px-3.5 flex flex-col items-center">
@@ -170,10 +173,10 @@ export function Sidebar({
           <div className="filter drop-shadow-md">
             <BlueCubeLogo className="h-12 w-12" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 leading-tight mt-2.5">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight mt-2.5">
             TalkStock
           </h1>
-          <p className="text-[11px] font-medium text-slate-500 leading-tight mt-1 text-center">
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight mt-1 text-center">
             Smart Inventory,<br />
             Powered by Voice
           </p>
@@ -194,7 +197,7 @@ export function Sidebar({
                 className={`group w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-sm transition-all duration-150 cursor-pointer ${
                   isActive
                     ? 'bg-blue-600 text-white font-medium shadow-md shadow-blue-500/25'
-                    : 'bg-transparent text-slate-900 hover:text-blue-600 hover:bg-blue-50/70 font-medium'
+                    : 'bg-transparent text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 font-medium'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -202,7 +205,7 @@ export function Sidebar({
                     className={`shrink-0 transition-colors ${
                       isActive
                         ? 'text-white'
-                        : 'text-slate-900 group-hover:text-blue-600'
+                        : 'text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                     }`}
                   >
                     {item.icon}
@@ -230,7 +233,7 @@ export function Sidebar({
       </div>
 
       {/* Bottom Area: Voice Status Card & Theme Selector */}
-      <div className="p-3.5 space-y-2.5 border-t border-slate-100 bg-white">
+      <div className="p-3.5 space-y-2.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors duration-200">
         {/* Voice Status Card */}
         <div
           onClick={onOpenVoice}
@@ -239,23 +242,23 @@ export function Sidebar({
           aria-label="Open Voice Assistant"
           className={`rounded-2xl border p-3.5 shadow-xs flex flex-col items-center text-center transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${
             isListening
-              ? 'border-blue-400 bg-gradient-to-b from-blue-100/90 via-white to-blue-50 ring-2 ring-blue-300'
-              : 'border-blue-100/80 bg-gradient-to-b from-blue-50/50 via-white to-blue-50/30 hover:border-blue-300'
+              ? 'border-blue-400 dark:border-blue-500 bg-gradient-to-b from-blue-100/90 via-white to-blue-50 dark:from-slate-800 dark:via-slate-850 dark:to-slate-800 ring-2 ring-blue-300 dark:ring-blue-700'
+              : 'border-blue-100/80 dark:border-slate-800 bg-gradient-to-b from-blue-50/50 via-white to-blue-50/30 dark:from-slate-800/60 dark:via-slate-800/30 dark:to-slate-800/50 hover:border-blue-300 dark:hover:border-slate-700'
           }`}
         >
           {/* Microphone Icon in subtle soft blue badge */}
           <div className={`flex h-10 w-10 items-center justify-center rounded-full mb-1.5 shadow-xs border transition-all ${
             isListening
               ? 'bg-blue-600 text-white border-blue-600 scale-105 animate-pulse'
-              : 'bg-blue-50 text-blue-600 border-blue-100/60'
+              : 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 border-blue-100/60 dark:border-slate-700'
           }`}>
             <Mic className="h-5 w-5" />
           </div>
 
-          <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">
             {isListening ? 'Listening...' : 'Voice Ready'}
           </h3>
-          <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+          <p className="text-[11px] text-slate-400 dark:text-slate-400 font-medium mt-0.5">
             {isListening ? 'Speak now...' : 'Say something...'}
           </p>
 
@@ -274,16 +277,27 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Theme Selector (Sun Icon, Light Mode, Dropdown Arrow) */}
-        <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 transition-colors cursor-pointer text-slate-700">
+        {/* Interactive Theme Selector Button */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-xs hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer text-slate-700 dark:text-slate-200"
+        >
           <div className="flex items-center gap-2">
-            <Sun className="h-4 w-4 text-amber-500 fill-amber-400 shrink-0" />
-            <span className="text-xs font-semibold tracking-tight text-slate-800">
-              Light Mode
+            {isDark ? (
+              <Moon className="h-4 w-4 text-indigo-400 fill-indigo-400 shrink-0" />
+            ) : (
+              <Sun className="h-4 w-4 text-amber-500 fill-amber-400 shrink-0" />
+            )}
+            <span className="text-xs font-semibold tracking-tight text-slate-800 dark:text-slate-200">
+              {isDark ? 'Dark Mode' : 'Light Mode'}
             </span>
           </div>
-          <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-        </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-600">
+            {isDark ? 'Dark' : 'Light'}
+          </span>
+        </button>
       </div>
     </aside>
   );

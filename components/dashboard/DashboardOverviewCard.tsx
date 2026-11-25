@@ -67,14 +67,14 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
 
   return (
     <section aria-label="Dashboard Overview" className={className}>
-      <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(15,23,42,0.03)] p-6 md:p-7">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl border border-slate-100/90 dark:border-slate-800 shadow-[0_4px_24px_rgba(15,23,42,0.03)] dark:shadow-none p-6 md:p-7 transition-colors duration-200">
         {/* Header: Blue bar-chart icon, Title, Right-side dropdown */}
         <div className="flex items-center justify-between pb-4 md:pb-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <BarChart2 className="h-5 w-5" />
             </div>
-            <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">
+            <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               Dashboard Overview
             </h3>
           </div>
@@ -82,7 +82,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
           {/* Right side dropdown: This Month ▼ */}
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white text-xs md:text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer"
           >
             <span>This Month</span>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
@@ -129,7 +129,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
               y1={topY}
               x2={endX}
               y2={topY}
-              stroke="#F1F5F9"
+              className="stroke-slate-100 dark:stroke-slate-800"
               strokeWidth="1.5"
             />
             <line
@@ -137,7 +137,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
               y1={midY}
               x2={endX}
               y2={midY}
-              stroke="#F1F5F9"
+              className="stroke-slate-100 dark:stroke-slate-800"
               strokeWidth="1.5"
             />
             <line
@@ -145,7 +145,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
               y1={baselineY}
               x2={endX}
               y2={baselineY}
-              stroke="#E2E8F0"
+              className="stroke-slate-200 dark:stroke-slate-700"
               strokeWidth="1.5"
             />
 
@@ -154,7 +154,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
               x="38"
               y={topY + 4}
               textAnchor="end"
-              className="text-[11.5px] font-medium fill-slate-400 select-none"
+              className="text-[11.5px] font-medium fill-slate-400 dark:fill-slate-500 select-none"
             >
               100
             </text>
@@ -162,7 +162,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
               x="38"
               y={midY + 4}
               textAnchor="end"
-              className="text-[11.5px] font-medium fill-slate-400 select-none"
+              className="text-[11.5px] font-medium fill-slate-400 dark:fill-slate-500 select-none"
             >
               50
             </text>
@@ -170,7 +170,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
               x="38"
               y={baselineY + 4}
               textAnchor="end"
-              className="text-[11.5px] font-medium fill-slate-400 select-none"
+              className="text-[11.5px] font-medium fill-slate-400 dark:fill-slate-500 select-none"
             >
               0
             </text>
@@ -208,7 +208,7 @@ export function DashboardOverviewCard({ className = '' }: { className?: string }
                   x={pt.x}
                   y="204"
                   textAnchor="middle"
-                  className="text-[12px] font-medium fill-slate-500 select-none"
+                  className="text-[12px] font-medium fill-slate-500 dark:fill-slate-400 select-none"
                 >
                   {pt.day}
                 </text>
