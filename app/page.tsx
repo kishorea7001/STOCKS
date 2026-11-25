@@ -176,14 +176,8 @@ export default function TalkStockApp() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const latestTranscriptRef = useRef<string>('');
   const hasExecutedRef = useRef<boolean>(false);
-  const audioStreamRef = useRef<MediaStream | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const audioContextRef = useRef<any>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
 
   const showToast = useCallback((text: string, type: 'success' | 'info' | 'alert' = 'success') => {
     setToastMessage({ text, type });
@@ -351,73 +345,8 @@ export default function TalkStockApp() {
     executeCommandRef.current = executeCommand;
   }, [executeCommand]);
 
-  // Audio capture function for real-time visualizer
-  const startAudioMeter = async () => {
-    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream;
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-
-      const audioCtx = new AudioContextClass();
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 64;
-      const source = audioCtx.createMediaStreamSource(stream);
-      source.connect(analyser);
-
-      audioContextRef.current = audioCtx;
-      analyserRef.current = analyser;
-
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const updateMeter = () => {
-        if (!analyserRef.current) return;
-        analyserRef.current.getByteFrequencyData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const avg = sum / bufferLength;
-        setAudioLevel(Math.min(100, Math.round(avg * 1.5)));
-        animFrameRef.current = requestAnimationFrame(updateMeter);
-      };
-      updateMeter();
-    } catch (err) {
-      console.warn('Audio meter init error:', err);
-    }
-  };
-
-  const stopAudioMeter = () => {
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach((track) => track.stop());
-      audioStreamRef.current = null;
-    }
-    if (audioContextRef.current) {
-      try {
-        audioContextRef.current.close();
-      } catch {
-        // ignore
-      }
-      audioContextRef.current = null;
-    }
-    setAudioLevel(0);
-  };
-
   const stopListening = useCallback(() => {
     setIsListening(false);
-    stopAudioMeter();
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -435,13 +364,10 @@ export default function TalkStockApp() {
       ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       : null;
 
-    // Start Audio Level Meter
-    startAudioMeter();
-
     if (!SpeechRecognition) {
-      setIsListening(true);
-      setSpeechError('Browser speech engine unavailable or blocked. You can tap the sample commands or type below.');
-      showToast('Speech recognition not supported in this browser.', 'alert');
+      setIsListening(false);
+      setSpeechError('Web Speech API is not supported in this browser. Please use Google Chrome or Microsoft Edge, or click the sample command chips.');
+      showToast('Please use Google Chrome or Microsoft Edge for live voice.', 'alert');
       return;
     }
 
@@ -449,7 +375,7 @@ export default function TalkStockApp() {
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
       recognition.interimResults = true;
-      recognition.continuous = true;
+      recognition.continuous = false; // Fast single utterance: immediate onresult, no driver hang
       recognition.maxAlternatives = 1;
 
       latestTranscriptRef.current = '';
@@ -459,7 +385,7 @@ export default function TalkStockApp() {
 
       recognition.onstart = () => {
         setIsListening(true);
-        showToast('Listening... Speak your inventory command clearly.', 'info');
+        showToast('Microphone active. Speak your command now...', 'info');
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -480,40 +406,36 @@ export default function TalkStockApp() {
         if (phrase) {
           latestTranscriptRef.current = phrase;
           setLiveTranscript(phrase);
+        }
 
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
-          // Auto-apply command 1.4s after user finishes speaking
-          silenceTimerRef.current = setTimeout(() => {
-            if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
-              hasExecutedRef.current = true;
-              executeCommandRef.current(latestTranscriptRef.current.trim());
-              stopListening();
-            }
-          }, 1400);
+        if (final && !hasExecutedRef.current) {
+          hasExecutedRef.current = true;
+          executeCommandRef.current(final.trim());
+          stopListening();
         }
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
         console.warn('Speech recognition error:', event.error);
-        if (event.error === 'not-allowed') {
-          setSpeechError('Microphone permission blocked. Click the lock/site settings icon in your browser address bar to allow microphone.');
-          showToast('Microphone blocked. Please grant microphone permission.', 'alert');
+        if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+          setSpeechError('Microphone blocked by Windows or browser permissions. Check Windows Settings (Privacy > Microphone) & click the lock icon in your browser address bar to Allow.');
+          showToast('Microphone access blocked. Please check Windows and browser permissions.', 'alert');
           stopListening();
         } else if (event.error === 'network') {
-          setSpeechError('Google speech recognition network service unreachable. You can tap any sample command or use the text box.');
+          setSpeechError('Browser speech recognition service unreachable. Use Google Chrome or Microsoft Edge, or click the sample command chips.');
           showToast('Speech service network error.', 'alert');
           stopListening();
         } else if (event.error === 'no-speech') {
-          // Keep listening
+          showToast('No speech detected. Please speak closer to your microphone.', 'info');
+          stopListening();
         } else {
-          setSpeechError(`Voice notice: ${event.error}`);
+          setSpeechError(`Voice notice: ${event.error}. You can also use the sample command chips below.`);
+          stopListening();
         }
       };
 
       recognition.onend = () => {
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         if (!hasExecutedRef.current && latestTranscriptRef.current.trim()) {
           hasExecutedRef.current = true;
           executeCommandRef.current(latestTranscriptRef.current.trim());

@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Send,
   Boxes,
+  Info,
 } from 'lucide-react';
 
 export interface VoiceCommandModalProps {
@@ -155,21 +156,27 @@ export function VoiceCommandModal({
           </div>
 
           {/* Audio Equalizer Bars */}
-          <div className="flex items-center justify-center gap-1 h-7 py-1">
-            {[4, 8, 14, 20, 12, 18, 24, 16, 10, 6].map((baseHeight, i) => {
-              const dynHeight = isListening
-                ? Math.min(28, Math.max(4, baseHeight + (audioLevel > 5 ? (audioLevel % (i + 5)) * 3 : 0)))
-                : 4;
-              return (
-                <span
-                  key={i}
-                  className={`w-1 rounded-full transition-all duration-150 ${
-                    isListening ? 'bg-blue-600' : 'bg-slate-300'
-                  }`}
-                  style={{ height: `${dynHeight}px` }}
-                />
-              );
-            })}
+          <div className="flex items-center justify-center gap-1.5 h-8 py-1">
+            {[
+              'h-3 bg-blue-400',
+              'h-5 bg-blue-500',
+              'h-7 bg-blue-600',
+              'h-4 bg-blue-500',
+              'h-6 bg-blue-600',
+              'h-8 bg-blue-700',
+              'h-5 bg-blue-600',
+              'h-7 bg-blue-500',
+              'h-4 bg-blue-400',
+              'h-2 bg-blue-300',
+            ].map((cls, i) => (
+              <span
+                key={i}
+                className={`w-1 rounded-full transition-all duration-200 ${
+                  isListening ? `${cls} animate-pulse` : 'h-1.5 bg-slate-300'
+                }`}
+                style={{ animationDelay: `${i * 100}ms` }}
+              />
+            ))}
           </div>
         </div>
 
@@ -262,6 +269,14 @@ export function VoiceCommandModal({
             <span>Run</span>
           </button>
         </form>
+
+        {/* Browser & OS Permission Tip */}
+        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 leading-relaxed">
+          <Info className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
+          <span>
+            <strong className="text-slate-700 font-semibold">No plugins required:</strong> Powered by the browser-native Web Speech API. If your voice isn&apos;t picked up, ensure you are using <strong>Google Chrome</strong> or <strong>Edge</strong>, and verify microphone access in <strong>Windows Settings &gt; Privacy &gt; Microphone</strong> and your browser address bar.
+          </span>
+        </div>
       </div>
     </div>
   );
