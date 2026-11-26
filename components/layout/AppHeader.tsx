@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Menu, Sun, Moon } from 'lucide-react';
+import Link from 'next/link';
+import { Menu, Sun, Moon, Globe } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export interface AppHeaderProps {
@@ -45,8 +46,18 @@ export function AppHeader({
         </div>
       </div>
 
-      {/* Upper-right Status & Quick Theme Toggle Pill */}
+      {/* Upper-right Status & Quick Navigation */}
       <div className="flex items-center gap-2.5 self-start sm:self-center">
+        {/* Link back to KV Landing / 3D Globe */}
+        <Link
+          href="/"
+          title="Return to KV Freight 3D Globe & Overview"
+          className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-50/80 dark:bg-blue-950/40 px-3.5 py-1.5 text-xs md:text-sm font-semibold text-[#2f63ff] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-xs"
+        >
+          <Globe className="h-4 w-4 text-[#2f63ff]" />
+          <span>KV Freight Home</span>
+        </Link>
+
         {/* Quick Theme Toggle Button */}
         <button
           type="button"

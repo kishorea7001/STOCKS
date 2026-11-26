@@ -29,9 +29,9 @@ export default function ProductsPage() {
 
   const handleSelectNav = (key: string) => {
     if (key === 'home') {
-      router.push('/');
+      router.push('/dashboard');
     } else {
-      router.push(`/?tab=${key}`);
+      router.push(`/dashboard?tab=${key}`);
     }
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
   Home,
   Box,
@@ -11,6 +12,7 @@ import {
   Sun,
   Moon,
   Mic,
+  Globe,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -169,18 +171,18 @@ export function Sidebar({
       {/* Top Branding & Navigation */}
       <div className="pt-6 pb-2 px-3.5 flex flex-col items-center">
         {/* Top Logo Section: Centered 3D Cube, Bold Title, Subtitle */}
-        <div className="flex flex-col items-center text-center">
+        <Link href="/" title="Go to KV Freight Landing Page" className="flex flex-col items-center text-center group transition-transform hover:scale-[1.02]">
           <div className="filter drop-shadow-md">
             <BlueCubeLogo className="h-12 w-12" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight mt-2.5">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight mt-2.5 group-hover:text-blue-600 transition-colors">
             TalkStock
           </h1>
           <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight mt-1 text-center">
             Smart Inventory,<br />
             Powered by Voice
           </p>
-        </div>
+        </Link>
 
         {/* Navigation Items (approx 220px layout) */}
         <nav
