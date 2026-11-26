@@ -614,8 +614,127 @@
       pointer-events: auto;
     }
 
-    /* PORTRAIT MODE (m-port) */
-    html.m-port .hf {
+    /* PORTRAIT MODE (m-port) & MOBILE VIEWPORTS */
+    html.m-port .hwrap,
+    @media (max-width: 768px) {
+      .hwrap {
+        height: auto !important;
+      }
+    }
+    html.m-port section.hero,
+    @media (max-width: 768px) {
+      section.hero {
+        position: relative !important;
+        height: auto !important;
+        min-height: 100svh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+      }
+    }
+    html.m-port .hf,
+    @media (max-width: 768px) {
+      .hf {
+        order: 1 !important;
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        top: 0 !important;
+        left: 0 !important;
+        padding: 22px 22px 0 22px !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+    }
+    html.m-port .logo,
+    @media (max-width: 768px) {
+      .logo {
+        position: absolute !important;
+        left: 22px !important;
+        top: 20px !important;
+        width: 58px !important;
+        z-index: 10 !important;
+      }
+    }
+    html.m-port .vnav,
+    @media (max-width: 768px) {
+      .vnav {
+        position: absolute !important;
+        right: 22px !important;
+        top: 20px !important;
+        left: auto !important;
+        text-align: right !important;
+        z-index: 10 !important;
+      }
+      .vnav li {
+        padding: 4px 0 !important;
+      }
+      .vnav a {
+        font-size: 12px !important;
+      }
+    }
+    html.m-port .copy,
+    @media (max-width: 768px) {
+      .copy {
+        position: relative !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin-top: clamp(48px, 10vh, 96px) !important;
+      }
+    }
+    html.m-port .overline,
+    @media (max-width: 768px) {
+      .overline {
+        font-size: 14px !important;
+      }
+    }
+    html.m-port .hl,
+    @media (max-width: 768px) {
+      .hl {
+        font-size: min(23vw, 150px) !important;
+        margin-top: 12px !important;
+        line-height: 0.95 !important;
+      }
+    }
+    html.m-port .lede,
+    @media (max-width: 768px) {
+      .lede {
+        font-size: 15px !important;
+        max-width: 420px !important;
+        margin-top: 20px !important;
+        line-height: 1.45 !important;
+      }
+    }
+    html.m-port .btns,
+    @media (max-width: 768px) {
+      .btns {
+        margin-top: 20px !important;
+        gap: 10px !important;
+      }
+    }
+    html.m-port .btn,
+    @media (max-width: 768px) {
+      .btn {
+        height: 40px !important;
+        padding: 0 20px !important;
+        font-size: 11px !important;
+      }
+    }
+    html.m-port .gwrap,
+    @media (max-width: 768px) {
+      .gwrap {
+        order: 2 !important;
+        position: relative !important;
+        inset: auto !important;
+        width: 100% !important;
+        height: 98vw !important;
+        margin-top: 16px !important;
+        overflow: hidden !important;
+        -webkit-mask-image: linear-gradient(to bottom, black 72%, transparent 100%) !important;
+        mask-image: linear-gradient(to bottom, black 72%, transparent 100%) !important;
+      }
+    }
       position: relative;
       width: 100%;
       height: auto;

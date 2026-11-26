@@ -238,6 +238,7 @@ export default function KvFreightLandingPage() {
       resizeGlobe();
     };
     window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
 
     const startTime = performance.now();
     const tiltRad = (9 * Math.PI) / 180;
@@ -1423,170 +1424,248 @@ export default function KvFreightLandingPage() {
           pointer-events: auto;
         }
 
-        /* PORTRAIT MODE (m-port) */
-        html.m-port .hf {
-          position: relative;
-          width: 100%;
-          height: auto;
-          top: 0;
-          padding: 22px 22px 0 22px;
-          display: flex;
-          flex-direction: column;
-        }
-        html.m-port .logo {
-          position: absolute;
-          left: 22px;
-          top: 20px;
-          width: 58px;
-        }
-        html.m-port .vnav {
-          position: absolute;
-          right: 22px;
-          top: 20px;
-          left: auto;
-          text-align: right;
-        }
-        html.m-port .vnav li {
-          padding: 4px 0;
-        }
-        html.m-port .vnav a {
-          font-size: 12px;
-        }
-        html.m-port .copy {
-          position: relative;
-          left: 0;
-          top: 0;
-          width: 100%;
-          margin-top: clamp(44px, 9vh, 96px);
-        }
-        html.m-port .overline {
-          font-size: 14px;
-        }
-        html.m-port .hl {
-          font-size: min(23vw, 150px);
-          margin-top: 12px;
-        }
-        html.m-port .lede {
-          font-size: 15px;
-          max-width: 420px;
-          margin-top: 20px;
-        }
-        html.m-port .btns {
-          margin-top: 20px;
-          gap: 10px;
-        }
-        html.m-port .btn-kv {
-          height: 40px;
-          padding: 0 20px;
-          font-size: 11px;
+        /* PORTRAIT MODE (m-port) & MOBILE VIEWPORTS */
+        html.m-port .hwrap,
+        @media (max-width: 768px) {
+          .hwrap {
+            height: auto !important;
+          }
         }
 
-        html.m-port .gwrap {
-          position: relative;
-          width: 100%;
-          height: 98vw;
-          margin-top: 20px;
-          overflow: hidden;
-          -webkit-mask-image: linear-gradient(to bottom, black 72%, transparent 100%);
-          mask-image: linear-gradient(to bottom, black 72%, transparent 100%);
+        html.m-port section.hero,
+        @media (max-width: 768px) {
+          section.hero {
+            position: relative !important;
+            height: auto !important;
+            min-height: 100svh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
         }
 
-        /* STATS IN PORTRAIT & SHORT LAND */
+        html.m-port .hf,
+        @media (max-width: 768px) {
+          .hf {
+            order: 1 !important;
+            position: relative !important;
+            width: 100% !important;
+            height: auto !important;
+            top: 0 !important;
+            left: 0 !important;
+            padding: 22px 22px 0 22px !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+        }
+
+        html.m-port .logo,
+        @media (max-width: 768px) {
+          .logo {
+            position: absolute !important;
+            left: 22px !important;
+            top: 20px !important;
+            width: 58px !important;
+            z-index: 10 !important;
+          }
+        }
+
+        html.m-port .vnav,
+        @media (max-width: 768px) {
+          .vnav {
+            position: absolute !important;
+            right: 22px !important;
+            top: 20px !important;
+            left: auto !important;
+            text-align: right !important;
+            z-index: 10 !important;
+          }
+          .vnav li {
+            padding: 4px 0 !important;
+          }
+          .vnav a {
+            font-size: 12px !important;
+          }
+        }
+
+        html.m-port .copy,
+        @media (max-width: 768px) {
+          .copy {
+            position: relative !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin-top: clamp(48px, 10vh, 96px) !important;
+          }
+        }
+
+        html.m-port .overline,
+        @media (max-width: 768px) {
+          .overline {
+            font-size: 14px !important;
+          }
+        }
+
+        html.m-port .hl,
+        @media (max-width: 768px) {
+          .hl {
+            font-size: min(23vw, 150px) !important;
+            margin-top: 12px !important;
+            line-height: 0.95 !important;
+          }
+        }
+
+        html.m-port .lede,
+        @media (max-width: 768px) {
+          .lede {
+            font-size: 15px !important;
+            max-width: 420px !important;
+            margin-top: 20px !important;
+            line-height: 1.45 !important;
+          }
+        }
+
+        html.m-port .btns,
+        @media (max-width: 768px) {
+          .btns {
+            margin-top: 20px !important;
+            gap: 10px !important;
+          }
+          .btn-kv {
+            height: 40px !important;
+            padding: 0 20px !important;
+            font-size: 11px !important;
+          }
+        }
+
+        html.m-port .gwrap,
+        @media (max-width: 768px) {
+          .gwrap {
+            order: 2 !important;
+            position: relative !important;
+            inset: auto !important;
+            width: 100% !important;
+            height: 98vw !important;
+            margin-top: 16px !important;
+            overflow: hidden !important;
+            -webkit-mask-image: linear-gradient(to bottom, black 72%, transparent 100%) !important;
+            mask-image: linear-gradient(to bottom, black 72%, transparent 100%) !important;
+          }
+        }
+
+        /* STATS IN PORTRAIT, SHORT LAND & MOBILE VIEWPORTS */
         html.m-port section.stats,
-        html.m-land section.stats {
-          padding: 56px 22px 72px 22px;
-          display: flex;
-          flex-direction: column;
-        }
-        html.m-port .pin, html.m-land .pin,
-        html.m-port .col, html.m-land .col {
-          position: static;
-          display: contents;
-          height: auto;
-          margin: 0;
-        }
-        html.m-port .ph, html.m-land .ph {
-          position: relative;
-          left: auto;
-          top: auto;
-          width: 100%;
-          max-width: 620px;
-          aspect-ratio: 440 / 236;
-          height: auto;
-          order: 1;
-          margin-bottom: 28px;
-        }
-        html.m-port .intro, html.m-land .intro {
-          position: relative;
-          left: auto;
-          top: auto;
-          width: 100%;
-          max-width: 520px;
-          font-size: 15px;
-          order: 2;
-          margin-bottom: 48px;
-        }
-        html.m-port .intro p + p, html.m-land .intro p + p {
-          margin-top: 16px;
-        }
-        html.m-port .big, html.m-land .big {
-          position: relative;
-          left: auto;
-          top: auto;
-          width: 100%;
-          font-size: min(15.5vw, 120px);
-          order: 3;
-          margin-bottom: 44px;
-        }
-        html.m-port .nums, html.m-land .nums {
-          position: relative;
-          left: auto;
-          top: auto;
-          width: 100%;
-          order: 4;
-        }
-        html.m-port .nums li, html.m-land .nums li {
-          height: auto;
-          padding: 18px 0;
-        }
-        html.m-port .nums li + li::before, html.m-land .nums li + li::before {
-          top: 0;
-        }
-        html.m-port .nums .n, html.m-land .nums .n {
-          font-size: min(19vw, 100px);
-        }
-        html.m-port .nums .c, html.m-land .nums .c {
-          font-size: 14px;
-          margin-top: 4px;
+        html.m-land section.stats,
+        @media (max-width: 768px) {
+          section.stats {
+            padding: 56px 22px 72px 22px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: relative !important;
+          }
+          .pin, .col {
+            position: static !important;
+            display: contents !important;
+            height: auto !important;
+            margin: 0 !important;
+          }
+          .ph {
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            width: 100% !important;
+            max-width: 620px !important;
+            aspect-ratio: 440 / 236 !important;
+            height: auto !important;
+            order: 1 !important;
+            margin-bottom: 28px !important;
+            clip-path: inset(0) !important;
+          }
+          .intro {
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            width: 100% !important;
+            max-width: 520px !important;
+            font-size: 15px !important;
+            order: 2 !important;
+            margin-bottom: 48px !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+          .intro p + p {
+            margin-top: 16px !important;
+          }
+          .intro-links {
+            margin-top: 18px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 20px !important;
+          }
+          .big {
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            width: 100% !important;
+            font-size: min(15.5vw, 120px) !important;
+            order: 3 !important;
+            margin-bottom: 44px !important;
+          }
+          .nums {
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            width: 100% !important;
+            order: 4 !important;
+          }
+          .nums li {
+            height: auto !important;
+            padding: 18px 0 !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+          .nums li + li::before {
+            top: 0 !important;
+          }
+          .nums .n {
+            font-size: min(19vw, 100px) !important;
+          }
+          .nums .c {
+            font-size: 14px !important;
+            margin-top: 4px !important;
+          }
         }
 
-        /* SERVICES IN PHONE FRAMING (m-hp) */
-        html.m-hp .readout {
-          left: 20px;
-          top: 22px;
-          font-size: 11px;
-        }
-        html.m-hp .strip {
-          top: calc(44 * var(--u));
-          gap: calc(56 * var(--u));
-          padding-left: 22px;
-        }
-        html.m-hp .lead-block {
-          flex-direction: column;
-          gap: calc(24 * var(--u));
-        }
-        html.m-hp .lead-hl {
-          font-size: calc(46 * var(--u));
-        }
-        html.m-hp .lead-paras {
-          width: calc(300 * var(--u));
-          font-size: 13px;
-        }
-        html.m-hp .card {
-          width: calc(250 * var(--u));
-        }
-        html.m-hp .card-body {
-          font-size: 13px;
+        /* SERVICES IN PHONE FRAMING (m-hp) & MOBILE VIEWPORTS */
+        html.m-hp .readout,
+        @media (max-width: 768px) {
+          .readout {
+            left: 20px !important;
+            top: 22px !important;
+            font-size: 11px !important;
+          }
+          .strip {
+            top: calc(44 * var(--u)) !important;
+            gap: calc(56 * var(--u)) !important;
+            padding-left: 22px !important;
+          }
+          .lead-block {
+            flex-direction: column !important;
+            gap: calc(24 * var(--u)) !important;
+          }
+          .lead-hl {
+            font-size: calc(46 * var(--u)) !important;
+          }
+          .lead-paras {
+            width: calc(300 * var(--u)) !important;
+            font-size: 13px !important;
+          }
+          .card {
+            width: calc(250 * var(--u)) !important;
+          }
+          .card-body {
+            font-size: 13px !important;
+          }
         }
 
         /* SHORT LANDSCAPE (m-land) */
@@ -1643,14 +1722,15 @@ export default function KvFreightLandingPage() {
       `}</style>
 
       {/* Floating Operations / Voice Command Trigger */}
-      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2.5 px-5 py-3 rounded-full bg-[#111111] hover:bg-[#2f63ff] text-white shadow-2xl hover:shadow-blue-500/30 font-mono text-xs font-semibold tracking-wider uppercase transition-all duration-300 border border-white/20 backdrop-blur-md group"
+          className="flex items-center gap-2 px-3.5 py-2 sm:px-5 sm:py-3 rounded-full bg-[#111111]/95 hover:bg-[#2f63ff] text-white shadow-2xl hover:shadow-blue-500/30 font-mono text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-all duration-300 border border-white/20 backdrop-blur-md group"
         >
-          <LayoutDashboard className="w-4 h-4 text-[#2f63ff] group-hover:text-white transition-colors" />
-          <span>Launch Dashboard</span>
-          <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#2f63ff] group-hover:text-white transition-colors" />
+          <span className="hidden xs:inline sm:inline">Launch Dashboard</span>
+          <span className="inline xs:hidden sm:hidden">Dashboard</span>
+          <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
         </Link>
       </div>
 
